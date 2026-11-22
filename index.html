@@ -441,6 +441,62 @@ body.fs #thumbs{padding-top:10px}
 #cust::-webkit-color-swatch-wrapper{padding:0}
 #cust::-webkit-color-swatch{border:0;border-radius:6px}
 #cust::-moz-color-swatch{border:0;border-radius:6px}
+
+/* ===== interactive 3D world map ===== */
+#mapOv{position:fixed;inset:0;z-index:40;background:#05070d;color:#e8eaee;display:none;flex-direction:column}
+#mapOv.on{display:flex}
+#mapOv .mTop{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;padding-top:max(10px,env(safe-area-inset-top));background:#12141a;border-bottom:1px solid #2c2f37;position:relative;z-index:6}
+#mapOv .mTop h3{margin:0;font-size:16px;flex:none}
+#mapOv .mSw{position:relative;flex:1;min-width:150px;max-width:440px}
+#mapOv input[type=search]{width:100%;background:#262932;color:#e8eaee;border:1px solid #343843;border-radius:10px;padding:8px 10px;font-size:16px}
+#mapOv .mTop select,#mapOv .mTop button{background:#262932;color:#e8eaee;border:1px solid #343843;border-radius:10px;min-height:38px;padding:4px 10px;font-size:14px}
+#mapOv .mTop button:hover{border-color:#d4ff3a}
+#mapOv .mTop button.on{background:#d4ff3a;color:#101114;border-color:#d4ff3a}
+#mapOv .mTop .go{background:#d4ff3a;color:#101114;border-color:#d4ff3a;font-weight:700}
+#mSug{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:#1b1d23;border:1px solid #2c2f37;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.5);overflow:hidden;z-index:10}
+#mSug button{display:block;width:100%;text-align:left;background:transparent!important;border:0!important;border-bottom:1px solid #2a2d36!important;border-radius:0!important;padding:8px 12px!important}
+#mSug button:hover{background:#262932!important}
+#mSug small{display:block;color:#9aa0ab;font-size:12px}
+#mSug .none{padding:10px 12px;color:#9aa0ab}
+#mLeg{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid #2c2f37;background:#0c0e13;position:relative;z-index:5}
+#mLeg button{display:flex;gap:6px;align-items:center;background:#1b1d23;color:#cfd3da;border:1px solid #2c2f37;border-radius:999px;padding:3px 10px;font-size:12px;min-height:28px}
+#mLeg button i{width:12px;height:12px;border-radius:4px;background:var(--c);display:inline-block}
+#mLeg button.on{border-color:#d4ff3a;color:#fff}
+#mLeg small{opacity:.6}
+#mLeg .cnt{margin-left:auto;font-size:12px;color:#9aa0ab}
+#mBody{flex:1;position:relative;min-height:0;overflow:hidden}
+#mHost{position:absolute;inset:0;cursor:grab;background:radial-gradient(ellipse at 50% 40%,#0b1730 0%,#05070d 70%)}
+#mapOv.has #mHost{right:340px}
+#mLoad{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;color:#cfd3da;background:rgba(18,20,26,.85);padding:14px 20px;border-radius:12px;z-index:4;display:none;pointer-events:none}
+#mDet{position:absolute;right:0;top:0;bottom:0;width:min(340px,100vw);background:#1b1d23;border-left:1px solid #2c2f37;padding:14px;overflow:auto;display:none;box-shadow:-8px 0 28px rgba(0,0,0,.35);z-index:4}
+#mapOv.has #mDet{display:block}
+#mDet .dh{display:flex;gap:12px;align-items:center}
+#mDet .fl{width:72px;height:auto;max-height:54px;object-fit:contain;border-radius:6px;box-shadow:0 0 0 1px #343843;flex:none}
+#mDet h2{margin:0;font-size:22px}
+#mDet .bn{color:#cfd3da;font-size:17px;margin-top:2px}
+#mDet .rgn{display:inline-block;margin-top:6px;padding:2px 10px;border-radius:999px;font-size:12px;color:#10131a;background:var(--c)}
+#mDet table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
+#mDet td{padding:6px 0;border-bottom:1px solid #2a2d36;vertical-align:top}
+#mDet td:first-child{color:#9aa0ab;width:42%;padding-right:8px}
+#mDet small{color:#9aa0ab}
+#mDet h4{margin:16px 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#d4ff3a}
+#mDet .pl{padding:8px 10px;margin-bottom:6px;background:#232630;border:1px solid #30343e;border-radius:10px;cursor:pointer}
+#mDet .pl:hover{border-color:#ffb020}
+#mDet .pl b{display:block;font-size:14px}
+#mDet .pl span{display:block;font-size:12px;color:#aeb4bf;margin:2px 0 4px}
+#mDet a{color:#6ea8ff;font-size:12px}
+#mDet .pe{color:#9aa0ab;font-size:13px}
+#mDet .wkx{font-size:13px;line-height:1.5;color:#cfd3da}
+#mDet .nav{display:flex;gap:6px;margin-top:14px}
+#mDet button{background:#262932;color:#e8eaee;border:1px solid #343843;border-radius:10px;min-height:38px;padding:4px 12px;flex:1}
+#mDet button:hover{border-color:#d4ff3a}
+.mTip{background:rgba(18,20,26,.92);color:#e8eaee;border:1px solid #343843;border-radius:8px;padding:6px 10px;font:13px/1.4 system-ui,sans-serif;max-width:240px}
+@media(max-width:820px){
+ #mapOv .mTop h3{display:none}
+ #mapOv.has #mHost{right:0;bottom:46vh}
+ #mDet{top:auto;left:0;right:0;width:auto;max-height:46vh;border-left:0;border-top:1px solid #2c2f37;border-radius:16px 16px 0 0}
+ #mLeg{flex-wrap:nowrap;overflow-x:auto}#mLeg button{flex:none}#mLeg .cnt{display:none}
+}
 </style>
 </head>
 <body>
@@ -1565,6 +1621,462 @@ movable(pn,pnGrip,"mynotes-pnavpos");
   pb.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="4" height="4" rx="1"/><rect x="10" y="4" width="4" height="4" rx="1"/><rect x="17" y="4" width="4" height="4" rx="1"/><rect x="3" y="10" width="4" height="4" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/><rect x="17" y="10" width="4" height="4" rx="1"/><rect x="3" y="16" width="4" height="4" rx="1"/><rect x="10" y="16" width="4" height="4" rx="1"/></svg><span>Periodic table</span>';
   pb.onclick=function(){morePop.style.display="none";openPT()};morePop.insertBefore(pb,morePop.firstChild);
   window.__pt={E:E,open:openPT};
+})();
+
+/* ---------- interactive 3D world map ---------- */
+(function(){
+/*DATA*/
+var RAW={
+Asia:`AFG|Afghanistan|Kabul|Afghani (AFN)|652230|34.53|69.17
+ARM|Armenia|Yerevan|Dram (AMD)|29743|40.18|44.51
+AZE|Azerbaijan|Baku|Manat (AZN)|86600|40.41|49.87
+BHR|Bahrain|Manama|Dinar (BHD)|786|26.23|50.59
+BGD|Bangladesh|Dhaka|Taka (BDT)|147570|23.81|90.41
+BTN|Bhutan|Thimphu|Ngultrum (BTN)|38394|27.47|89.64
+BRN|Brunei|Bandar Seri Begawan|Dollar (BND)|5765|4.89|114.94
+KHM|Cambodia|Phnom Penh|Riel (KHR)|181035|11.56|104.92
+CHN|China|Beijing|Yuan (CNY)|9596961|39.90|116.40
+CYP|Cyprus|Nicosia|Euro (EUR)|9251|35.17|33.36
+GEO|Georgia|Tbilisi|Lari (GEL)|69700|41.72|44.79
+IND|India|New Delhi|Rupee (INR)|3287263|28.61|77.21
+IDN|Indonesia|Jakarta|Rupiah (IDR)|1904569|-6.21|106.85
+IRN|Iran|Tehran|Rial (IRR)|1648195|35.69|51.39
+IRQ|Iraq|Baghdad|Dinar (IQD)|438317|33.31|44.37
+ISR|Israel|Jerusalem|Shekel (ILS)|22072|31.77|35.22
+JPN|Japan|Tokyo|Yen (JPY)|377975|35.68|139.69
+JOR|Jordan|Amman|Dinar (JOD)|89342|31.95|35.93
+KAZ|Kazakhstan|Astana|Tenge (KZT)|2724900|51.17|71.43
+KWT|Kuwait|Kuwait City|Dinar (KWD)|17818|29.38|47.99
+KGZ|Kyrgyzstan|Bishkek|Som (KGS)|199951|42.87|74.59
+LAO|Laos|Vientiane|Kip (LAK)|236800|17.97|102.63
+LBN|Lebanon|Beirut|Pound (LBP)|10452|33.89|35.50
+MYS|Malaysia|Kuala Lumpur|Ringgit (MYR)|330803|3.14|101.69
+MDV|Maldives|Malé|Rufiyaa (MVR)|298|4.18|73.51
+MNG|Mongolia|Ulaanbaatar|Tögrög (MNT)|1564116|47.89|106.91
+MMR|Myanmar|Naypyidaw|Kyat (MMK)|676578|19.76|96.08
+NPL|Nepal|Kathmandu|Rupee (NPR)|147181|27.72|85.32
+PRK|North Korea|Pyongyang|Won (KPW)|120538|39.04|125.76
+OMN|Oman|Muscat|Rial (OMR)|309500|23.59|58.41
+PAK|Pakistan|Islamabad|Rupee (PKR)|881913|33.68|73.05
+PSE|Palestine|Ramallah (administrative)|Shekel (ILS)|6020|31.90|35.20
+PHL|Philippines|Manila|Peso (PHP)|300000|14.60|120.98
+QAT|Qatar|Doha|Riyal (QAR)|11586|25.29|51.53
+SAU|Saudi Arabia|Riyadh|Riyal (SAR)|2149690|24.71|46.68
+SGP|Singapore|Singapore|Dollar (SGD)|734|1.35|103.82
+KOR|South Korea|Seoul|Won (KRW)|100210|37.57|126.98
+LKA|Sri Lanka|Sri Jayawardenepura Kotte|Rupee (LKR)|65610|6.90|79.96
+SYR|Syria|Damascus|Pound (SYP)|185180|33.51|36.28
+TWN|Taiwan|Taipei|Dollar (TWD)|36193|25.03|121.57
+TJK|Tajikistan|Dushanbe|Somoni (TJS)|143100|38.56|68.77
+THA|Thailand|Bangkok|Baht (THB)|513120|13.76|100.50
+TLS|Timor-Leste|Dili|US Dollar (USD)|14874|-8.56|125.57
+TUR|Turkey|Ankara|Lira (TRY)|783562|39.93|32.86
+TKM|Turkmenistan|Ashgabat|Manat (TMT)|488100|37.95|58.38
+ARE|United Arab Emirates|Abu Dhabi|Dirham (AED)|83600|24.47|54.37
+UZB|Uzbekistan|Tashkent|Soum (UZS)|448978|41.30|69.24
+VNM|Vietnam|Hanoi|Dong (VND)|331212|21.03|105.85
+YEM|Yemen|Sana'a|Rial (YER)|527968|15.37|44.19`,
+Europe:`ALB|Albania|Tirana|Lek (ALL)|28748|41.33|19.82
+AND|Andorra|Andorra la Vella|Euro (EUR)|468|42.51|1.52
+AUT|Austria|Vienna|Euro (EUR)|83871|48.21|16.37
+BLR|Belarus|Minsk|Ruble (BYN)|207600|53.90|27.57
+BEL|Belgium|Brussels|Euro (EUR)|30528|50.85|4.35
+BIH|Bosnia and Herzegovina|Sarajevo|Convertible Mark (BAM)|51209|43.86|18.41
+BGR|Bulgaria|Sofia|Euro (EUR)|110879|42.70|23.32
+HRV|Croatia|Zagreb|Euro (EUR)|56594|45.81|15.98
+CZE|Czechia|Prague|Koruna (CZK)|78865|50.08|14.44
+DNK|Denmark|Copenhagen|Krone (DKK)|43094|55.68|12.57
+EST|Estonia|Tallinn|Euro (EUR)|45228|59.44|24.75
+FIN|Finland|Helsinki|Euro (EUR)|338424|60.17|24.94
+FRA|France|Paris|Euro (EUR)|643801|48.86|2.35
+DEU|Germany|Berlin|Euro (EUR)|357114|52.52|13.40
+GRC|Greece|Athens|Euro (EUR)|131957|37.98|23.73
+HUN|Hungary|Budapest|Forint (HUF)|93028|47.50|19.04
+ISL|Iceland|Reykjavik|Króna (ISK)|103000|64.15|-21.94
+IRL|Ireland|Dublin|Euro (EUR)|70273|53.35|-6.26
+ITA|Italy|Rome|Euro (EUR)|301340|41.90|12.50
+XKX|Kosovo|Pristina|Euro (EUR)|10887|42.66|21.17
+LVA|Latvia|Riga|Euro (EUR)|64589|56.95|24.11
+LIE|Liechtenstein|Vaduz|Franc (CHF)|160|47.14|9.52
+LTU|Lithuania|Vilnius|Euro (EUR)|65300|54.69|25.28
+LUX|Luxembourg|Luxembourg City|Euro (EUR)|2586|49.61|6.13
+MLT|Malta|Valletta|Euro (EUR)|316|35.90|14.51
+MDA|Moldova|Chișinău|Leu (MDL)|33846|47.01|28.86
+MCO|Monaco|Monaco|Euro (EUR)|2|43.74|7.42
+MNE|Montenegro|Podgorica|Euro (EUR)|13812|42.44|19.26
+NLD|Netherlands|Amsterdam|Euro (EUR)|41850|52.37|4.90
+MKD|North Macedonia|Skopje|Denar (MKD)|25713|42.00|21.43
+NOR|Norway|Oslo|Krone (NOK)|385207|59.91|10.75
+POL|Poland|Warsaw|Złoty (PLN)|312696|52.23|21.01
+PRT|Portugal|Lisbon|Euro (EUR)|92212|38.72|-9.14
+ROU|Romania|Bucharest|Leu (RON)|238397|44.43|26.10
+RUS|Russia|Moscow|Ruble (RUB)|17098246|55.76|37.62
+SMR|San Marino|San Marino|Euro (EUR)|61|43.94|12.45
+SRB|Serbia|Belgrade|Dinar (RSD)|88361|44.79|20.45
+SVK|Slovakia|Bratislava|Euro (EUR)|49035|48.15|17.11
+SVN|Slovenia|Ljubljana|Euro (EUR)|20273|46.06|14.51
+ESP|Spain|Madrid|Euro (EUR)|505990|40.42|-3.70
+SWE|Sweden|Stockholm|Krona (SEK)|450295|59.33|18.07
+CHE|Switzerland|Bern|Franc (CHF)|41285|46.95|7.45
+UKR|Ukraine|Kyiv|Hryvnia (UAH)|603550|50.45|30.52
+GBR|United Kingdom|London|Pound (GBP)|243610|51.51|-0.13
+VAT|Vatican City|Vatican City|Euro (EUR)|0.44|41.90|12.45`,
+Africa:`DZA|Algeria|Algiers|Dinar (DZD)|2381741|36.75|3.06
+AGO|Angola|Luanda|Kwanza (AOA)|1246700|-8.84|13.23
+BEN|Benin|Porto-Novo|CFA Franc (XOF)|114763|6.50|2.63
+BWA|Botswana|Gaborone|Pula (BWP)|581730|-24.65|25.91
+BFA|Burkina Faso|Ouagadougou|CFA Franc (XOF)|272967|12.37|-1.52
+BDI|Burundi|Gitega|Franc (BIF)|27834|-3.43|29.92
+CPV|Cabo Verde|Praia|Escudo (CVE)|4033|14.93|-23.51
+CMR|Cameroon|Yaoundé|CFA Franc (XAF)|475442|3.85|11.50
+CAF|Central African Republic|Bangui|CFA Franc (XAF)|622984|4.36|18.56
+TCD|Chad|N'Djamena|CFA Franc (XAF)|1284000|12.13|15.05
+COM|Comoros|Moroni|Franc (KMF)|1861|-11.70|43.26
+COG|Congo|Brazzaville|CFA Franc (XAF)|342000|-4.27|15.28
+COD|DR Congo|Kinshasa|Franc (CDF)|2344858|-4.32|15.31
+CIV|Côte d'Ivoire|Yamoussoukro|CFA Franc (XOF)|322463|6.82|-5.28
+DJI|Djibouti|Djibouti|Franc (DJF)|23200|11.59|43.15
+EGY|Egypt|Cairo|Pound (EGP)|1002450|30.04|31.24
+GNQ|Equatorial Guinea|Malabo|CFA Franc (XAF)|28051|3.75|8.78
+ERI|Eritrea|Asmara|Nakfa (ERN)|117600|15.34|38.93
+SWZ|Eswatini|Mbabane|Lilangeni (SZL)|17364|-26.31|31.13
+ETH|Ethiopia|Addis Ababa|Birr (ETB)|1104300|9.03|38.74
+GAB|Gabon|Libreville|CFA Franc (XAF)|267668|0.42|9.47
+GMB|Gambia|Banjul|Dalasi (GMD)|11295|13.45|-16.58
+GHA|Ghana|Accra|Cedi (GHS)|238533|5.60|-0.19
+GIN|Guinea|Conakry|Franc (GNF)|245857|9.64|-13.58
+GNB|Guinea-Bissau|Bissau|CFA Franc (XOF)|36125|11.86|-15.60
+KEN|Kenya|Nairobi|Shilling (KES)|580367|-1.29|36.82
+LSO|Lesotho|Maseru|Loti (LSL)|30355|-29.31|27.48
+LBR|Liberia|Monrovia|Dollar (LRD)|111369|6.30|-10.80
+LBY|Libya|Tripoli|Dinar (LYD)|1759540|32.89|13.19
+MDG|Madagascar|Antananarivo|Ariary (MGA)|587041|-18.88|47.51
+MWI|Malawi|Lilongwe|Kwacha (MWK)|118484|-13.96|33.77
+MLI|Mali|Bamako|CFA Franc (XOF)|1240192|12.64|-8.00
+MRT|Mauritania|Nouakchott|Ouguiya (MRU)|1030700|18.08|-15.98
+MUS|Mauritius|Port Louis|Rupee (MUR)|2040|-20.16|57.50
+MAR|Morocco|Rabat|Dirham (MAD)|446550|34.02|-6.84
+MOZ|Mozambique|Maputo|Metical (MZN)|801590|-25.97|32.57
+NAM|Namibia|Windhoek|Dollar (NAD)|825615|-22.56|17.08
+NER|Niger|Niamey|CFA Franc (XOF)|1267000|13.51|2.11
+NGA|Nigeria|Abuja|Naira (NGN)|923768|9.08|7.40
+RWA|Rwanda|Kigali|Franc (RWF)|26338|-1.95|30.06
+STP|São Tomé and Príncipe|São Tomé|Dobra (STN)|964|0.34|6.73
+SEN|Senegal|Dakar|CFA Franc (XOF)|196722|14.72|-17.47
+SYC|Seychelles|Victoria|Rupee (SCR)|452|-4.62|55.45
+SLE|Sierra Leone|Freetown|Leone (SLE)|71740|8.48|-13.23
+SOM|Somalia|Mogadishu|Shilling (SOS)|637657|2.05|45.32
+ZAF|South Africa|Pretoria (admin.), Cape Town, Bloemfontein|Rand (ZAR)|1221037|-25.75|28.19
+SSD|South Sudan|Juba|Pound (SSP)|619745|4.85|31.58
+SDN|Sudan|Khartoum|Pound (SDG)|1861484|15.50|32.56
+TZA|Tanzania|Dodoma|Shilling (TZS)|945087|-6.16|35.75
+TGO|Togo|Lomé|CFA Franc (XOF)|56785|6.13|1.22
+TUN|Tunisia|Tunis|Dinar (TND)|163610|36.81|10.18
+UGA|Uganda|Kampala|Shilling (UGX)|241550|0.35|32.58
+ZMB|Zambia|Lusaka|Kwacha (ZMW)|752612|-15.39|28.32
+ZWE|Zimbabwe|Harare|Dollar (ZWG)|390757|-17.83|31.05
+ESH|Western Sahara|Laayoune (claimed)|Dirham (MAD)|266000|27.15|-13.20`,
+Americas:`ATG|Antigua and Barbuda|St. John's|EC Dollar (XCD)|442|17.12|-61.85
+ARG|Argentina|Buenos Aires|Peso (ARS)|2780400|-34.60|-58.38
+BHS|Bahamas|Nassau|Dollar (BSD)|13943|25.05|-77.35
+BRB|Barbados|Bridgetown|Dollar (BBD)|430|13.10|-59.61
+BLZ|Belize|Belmopan|Dollar (BZD)|22966|17.25|-88.77
+BOL|Bolivia|Sucre (La Paz = seat of government)|Boliviano (BOB)|1098581|-19.03|-65.26
+BRA|Brazil|Brasília|Real (BRL)|8515767|-15.79|-47.88
+CAN|Canada|Ottawa|Dollar (CAD)|9984670|45.42|-75.70
+CHL|Chile|Santiago|Peso (CLP)|756102|-33.45|-70.67
+COL|Colombia|Bogotá|Peso (COP)|1141748|4.71|-74.07
+CRI|Costa Rica|San José|Colón (CRC)|51100|9.93|-84.08
+CUB|Cuba|Havana|Peso (CUP)|109884|23.11|-82.37
+DMA|Dominica|Roseau|EC Dollar (XCD)|751|15.30|-61.39
+DOM|Dominican Republic|Santo Domingo|Peso (DOP)|48671|18.49|-69.93
+ECU|Ecuador|Quito|US Dollar (USD)|283561|-0.18|-78.47
+SLV|El Salvador|San Salvador|US Dollar (USD)|21041|13.69|-89.22
+GRL|Greenland|Nuuk|Krone (DKK)|2166086|64.18|-51.72
+GRD|Grenada|St. George's|EC Dollar (XCD)|344|12.06|-61.75
+GTM|Guatemala|Guatemala City|Quetzal (GTQ)|108889|14.63|-90.51
+GUY|Guyana|Georgetown|Dollar (GYD)|214969|6.80|-58.16
+HTI|Haiti|Port-au-Prince|Gourde (HTG)|27750|18.54|-72.34
+HND|Honduras|Tegucigalpa|Lempira (HNL)|112492|14.07|-87.19
+JAM|Jamaica|Kingston|Dollar (JMD)|10991|18.00|-76.79
+MEX|Mexico|Mexico City|Peso (MXN)|1964375|19.43|-99.13
+NIC|Nicaragua|Managua|Córdoba (NIO)|130373|12.11|-86.24
+PAN|Panama|Panama City|Balboa (PAB) / US Dollar|75417|8.98|-79.52
+PRY|Paraguay|Asunción|Guaraní (PYG)|406752|-25.26|-57.58
+PER|Peru|Lima|Sol (PEN)|1285216|-12.05|-77.04
+KNA|Saint Kitts and Nevis|Basseterre|EC Dollar (XCD)|261|17.30|-62.72
+LCA|Saint Lucia|Castries|EC Dollar (XCD)|616|14.01|-60.99
+VCT|Saint Vincent and the Grenadines|Kingstown|EC Dollar (XCD)|389|13.16|-61.22
+SUR|Suriname|Paramaribo|Dollar (SRD)|163820|5.85|-55.20
+TTO|Trinidad and Tobago|Port of Spain|Dollar (TTD)|5130|10.66|-61.51
+USA|United States|Washington, D.C.|Dollar (USD)|9833517|38.91|-77.04
+URY|Uruguay|Montevideo|Peso (UYU)|181034|-34.90|-56.19
+VEN|Venezuela|Caracas|Bolívar (VES)|916445|10.48|-66.90`,
+Oceania:`AUS|Australia|Canberra|Dollar (AUD)|7692024|-35.28|149.13
+FJI|Fiji|Suva|Dollar (FJD)|18272|-18.14|178.44
+KIR|Kiribati|South Tarawa|Dollar (AUD)|811|1.33|172.98
+MHL|Marshall Islands|Majuro|US Dollar (USD)|181|7.09|171.38
+FSM|Micronesia|Palikir|US Dollar (USD)|702|6.92|158.16
+NRU|Nauru|Yaren|Dollar (AUD)|21|-0.55|166.92
+NZL|New Zealand|Wellington|Dollar (NZD)|268838|-41.29|174.78
+PLW|Palau|Ngerulmud|US Dollar (USD)|459|7.50|134.62
+PNG|Papua New Guinea|Port Moresby|Kina (PGK)|462840|-9.44|147.18
+WSM|Samoa|Apia|Tālā (WST)|2842|-13.83|-171.76
+SLB|Solomon Islands|Honiara|Dollar (SBD)|28896|-9.43|159.95
+TON|Tonga|Nuku'alofa|Paʻanga (TOP)|747|-21.14|-175.20
+TUV|Tuvalu|Funafuti|Dollar (AUD)|26|-8.52|179.20
+VUT|Vanuatu|Port Vila|Vatu (VUV)|12189|-17.73|168.32`,
+Antarctica:`ATA|Antarctica|None (research stations)|None|14200000|-82.86|135.00`
+};
+var HPR=`BGD|Paharpur Buddhist Vihara~25.0314~88.9768~8th-century Pala-era monastery, UNESCO World Heritage Site|Sixty Dome Mosque (Bagerhat)~22.6746~89.7425~15th-century mosque city of Khan Jahan Ali, UNESCO site|Mahasthangarh~24.9649~89.3436~Ancient fortified city of Pundravardhana, 3rd century BCE|Lalbagh Fort~23.7188~90.3881~17th-century Mughal fort in Old Dhaka|Ahsan Manzil~23.7086~90.4064~Pink palace of the Dhaka Nawabs on the Buriganga|Kantajew Temple~25.7778~88.6322~18th-century terracotta Hindu temple, Dinajpur
+IND|Taj Mahal~27.1751~78.0421~Mughal marble mausoleum built 1632-1653 in Agra|Red Fort~28.6562~77.2410~17th-century Mughal fort and palace in Delhi|Hampi~15.3350~76.4600~Ruins of the Vijayanagara Empire capital|Ajanta Caves~20.5519~75.7033~Rock-cut Buddhist caves with ancient murals
+PAK|Mohenjo-daro~27.3290~68.1350~Indus Valley city, c. 2500 BCE|Harappa~30.6300~72.8640~Bronze Age Indus Valley city|Lahore Fort~31.5889~74.3156~Mughal-era citadel in Lahore|Taxila~33.7460~72.8250~Ancient Gandharan centre of Buddhist learning
+NPL|Pashupatinath Temple~27.7106~85.3488~Sacred Hindu temple complex on the Bagmati|Lumbini~27.4833~83.2767~Birthplace of Gautama Buddha|Kathmandu Durbar Square~27.7042~85.3070~Historic royal palace square of the Malla kings
+LKA|Sigiriya~7.9570~80.7603~5th-century rock fortress and palace|Anuradhapura~8.3114~80.4037~Ancient Sinhalese capital and Buddhist centre|Temple of the Tooth (Kandy)~7.2936~80.6413~Shrine housing the sacred tooth relic|Galle Fort~6.0289~80.2170~Dutch-era fortified city
+BTN|Paro Taktsang (Tiger's Nest)~27.4916~89.3633~Cliffside Buddhist monastery, 17th century|Punakha Dzong~27.5833~89.8667~Fortress-monastery at the river confluence|Paro Rinpung Dzong~27.4308~89.4167~17th-century fortress-monastery
+MMR|Bagan~21.1717~94.8585~Thousands of temples of the Pagan Kingdom|Shwedagon Pagoda~16.7983~96.1497~Gilded stupa in Yangon, over 2,500 years of tradition|Mandalay Palace~21.9972~96.0953~Last royal palace of the Burmese monarchy
+THA|Ayutthaya Historical Park~14.3532~100.5689~Ruins of the Kingdom of Ayutthaya, 1350-1767|Sukhothai Historical Park~17.0078~99.7036~13th-century first capital of Siam|Wat Arun~13.7437~100.4889~Temple of Dawn on the Chao Phraya|Grand Palace~13.7500~100.4913~Royal residence since 1782
+KHM|Angkor Wat~13.4125~103.8670~12th-century Khmer temple, largest religious monument|Bayon Temple~13.4412~103.8589~Temple of the smiling stone faces|Preah Vihear~14.3919~104.6803~11th-century Khmer temple on a cliff
+VNM|Imperial City of Huế~16.4699~107.5786~Nguyen dynasty citadel and palace|Hội An Ancient Town~15.8801~108.3380~Well-preserved 15th-19th century trading port|Củ Chi Tunnels~11.1431~106.4622~Vast wartime tunnel network
+IDN|Borobudur~-7.6079~110.2038~9th-century Mahayana Buddhist temple|Prambanan~-7.7520~110.4915~9th-century Hindu temple compound|Kota Tua Jakarta~-6.1352~106.8133~Dutch colonial Batavia old town
+CHN|Great Wall (Badaling)~40.3598~116.0200~Ming-dynasty section of the Great Wall|Forbidden City~39.9163~116.3972~Imperial palace of Ming and Qing dynasties|Terracotta Army~34.3841~109.2785~Army of Qin Shi Huang, c. 210 BCE|Temple of Heaven~39.8822~116.4066~Imperial sacrificial altar, 15th century
+JPN|Kinkaku-ji~35.0394~135.7292~Golden Pavilion Zen temple in Kyoto|Himeji Castle~34.8394~134.6939~Best-preserved feudal castle, 17th century|Itsukushima Shrine~34.2959~132.3199~Shinto shrine with floating torii gate|Todai-ji~34.6890~135.8398~8th-century temple with the Great Buddha
+KOR|Gyeongbokgung Palace~37.5796~126.9770~Main royal palace of the Joseon dynasty, 1395|Bulguksa~35.7900~129.3320~8th-century Silla Buddhist temple|Haeinsa~35.8010~128.0983~Temple housing the Tripitaka Koreana woodblocks
+UZB|Registan (Samarkand)~39.6547~66.9758~Timurid-era madrasa square|Itchan Kala (Khiva)~41.3786~60.3598~Walled inner city on the Silk Road|Shah-i-Zinda~39.6640~66.9900~Necropolis of mausoleums in Samarkand
+KAZ|Mausoleum of Khoja Ahmed Yasawi~43.2975~68.2700~14th-century Timurid mausoleum in Turkistan|Tamgaly Petroglyphs~43.8000~75.5000~Bronze Age rock carvings
+IRN|Persepolis~29.9349~52.8916~Ceremonial capital of the Achaemenid Empire|Naqsh-e Jahan Square~32.6575~51.6776~17th-century Safavid square in Isfahan|Pasargadae~30.1944~53.1667~Capital of Cyrus the Great|Chogha Zanbil~32.0094~48.5211~Elamite ziggurat, 13th century BCE
+IRQ|Babylon~32.5363~44.4209~Ancient Mesopotamian capital|Ur~30.9627~46.1031~Sumerian city with the Great Ziggurat|Samarra Spiral Minaret~34.3425~43.8267~9th-century Abbasid Malwiya Minaret|Hatra~35.5875~42.7167~Parthian-era fortified city
+SAU|Hegra (Mada'in Salih)~26.7917~37.9528~Nabataean tombs, 1st century CE|Diriyah~24.7342~46.5731~Birthplace of the first Saudi state|Historic Jeddah~21.4858~39.1862~Al-Balad coastal old town
+JOR|Petra~30.3285~35.4444~Nabataean rock-cut capital city|Jerash~32.2808~35.8993~Well-preserved Greco-Roman city|Qasr Amra~31.8022~36.5878~Umayyad desert castle with frescoes
+ISR|Masada~31.3156~35.3536~Herodian hilltop fortress|Western Wall~31.7767~35.2345~Remnant of the Second Temple complex|Old City of Acre~32.9217~35.0683~Crusader port city
+SYR|Palmyra~34.5505~38.2670~Ancient oasis city of caravan trade|Krak des Chevaliers~34.7566~36.2950~Crusader castle|Umayyad Mosque (Damascus)~33.5115~36.3067~8th-century mosque
+LBN|Baalbek~34.0069~36.2039~Roman temple complex of Jupiter and Bacchus|Byblos~34.1219~35.6481~One of the oldest continuously inhabited cities|Anjar~33.7283~35.9317~Umayyad-era city ruins
+TUR|Hagia Sophia~41.0086~28.9802~6th-century Byzantine cathedral in Istanbul|Ephesus~37.9411~27.3419~Greco-Roman city with the Library of Celsus|Göbekli Tepe~37.2231~38.9224~Neolithic temple site, c. 9500 BCE|Troy~39.9575~26.2389~Bronze Age city of Homeric legend
+ARE|Qasr Al Hosn~24.4828~54.3547~Oldest stone building in Abu Dhabi|Al Fahidi Fort~25.2631~55.2972~Dubai's oldest existing building, c. 1787|Al Ain Oases~24.2075~55.7447~Oasis settlement from the Bronze Age
+OMN|Bahla Fort~22.9667~57.3000~Pre-Islamic mud-brick fortress|Nizwa Fort~22.9333~57.5333~17th-century round tower fortress|Sumhuram~17.0300~54.4500~Ancient frankincense port
+YEM|Old City of Sana'a~15.3547~44.2067~Ancient multi-storey mud-brick city|Shibam~15.9283~48.6267~16th-century 'Manhattan of the desert'|Zabid~14.1953~43.3153~Medieval centre of Islamic learning
+AFG|Bamiyan Buddhas~34.8097~67.8250~Sites of 6th-century monumental Buddha statues|Minaret of Jam~34.3966~64.5161~12th-century Ghurid minaret|Herat Citadel~34.3402~62.2044~Alexander's Citadel, Timurid-era fortress
+ARM|Geghard Monastery~40.1403~44.8186~Medieval monastery carved into rock|Khor Virap~39.8761~44.5775~Monastery with a view of Mount Ararat|Tatev Monastery~39.3800~46.2500~9th-century cliffside monastery
+GEO|Svetitskhoveli Cathedral~41.8420~44.7200~11th-century cathedral in Mtskheta|Uplistsikhe~41.9667~44.2000~Ancient rock-hewn town|Gelati Monastery~42.2958~42.7667~12th-century academy and monastery
+AZE|Maiden Tower (Baku)~40.3664~49.8370~12th-century tower in the Old City|Palace of the Shirvanshahs~40.3667~49.8330~15th-century royal palace|Gobustan~40.1117~49.3792~Petroglyphs up to 40,000 years old
+GRC|Acropolis of Athens~37.9715~23.7257~5th-century BCE citadel with the Parthenon|Delphi~38.4824~22.5010~Sanctuary of the Pythian Apollo oracle|Olympia~37.6384~21.6300~Birthplace of the Olympic Games|Knossos~35.2980~25.1631~Minoan palace on Crete
+ITA|Colosseum~41.8902~12.4922~Roman amphitheatre completed in 80 CE|Pompeii~40.7510~14.4869~Roman city buried by Vesuvius in 79 CE|Leaning Tower of Pisa~43.7230~10.3966~12th-century bell tower|Roman Forum~41.8925~12.4853~Centre of ancient Roman public life
+FRA|Palace of Versailles~48.8049~2.1204~17th-century royal residence|Mont-Saint-Michel~48.6361~-1.5115~Medieval abbey on a tidal island|Notre-Dame de Paris~48.8530~2.3499~12th-century Gothic cathedral|Pont du Gard~43.9475~4.5353~1st-century Roman aqueduct
+ESP|Alhambra~37.1761~-3.5881~Nasrid palace-fortress in Granada|Sagrada Família~41.4036~2.1744~Gaudí's basilica, begun 1882|Mezquita of Córdoba~37.8789~-4.7794~8th-century mosque-cathedral|Royal Alcázar of Seville~37.3836~-5.9906~Mudéjar palace
+PRT|Belém Tower~38.6916~-9.2160~16th-century fortified tower of the Age of Discovery|Jerónimos Monastery~38.6979~-9.2063~Manueline monastery, 1501|Pena Palace (Sintra)~38.7876~-9.3906~19th-century Romanticist palace
+GBR|Stonehenge~51.1789~-1.8262~Neolithic stone circle, c. 3000-2000 BCE|Tower of London~51.5081~-0.0759~Fortress begun by William the Conqueror, 1066|Edinburgh Castle~55.9486~-3.1999~Historic fortress on Castle Rock|Roman Baths (Bath)~51.3811~-2.3590~1st-century Roman spa complex
+IRL|Newgrange~53.6947~-6.4755~Neolithic passage tomb, c. 3200 BCE|Rock of Cashel~52.5200~-7.8900~Medieval seat of the kings of Munster|Skellig Michael~51.7714~-10.5386~6th-century island monastery
+DEU|Cologne Cathedral~50.9413~6.9583~Gothic cathedral begun in 1248|Neuschwanstein Castle~47.5576~10.7498~19th-century Romanticist castle|Brandenburg Gate~52.5163~13.3777~18th-century neoclassical monument
+AUT|Schönbrunn Palace~48.1845~16.3122~Habsburg imperial summer residence|Hofburg~48.2065~16.3656~Habsburg imperial palace in Vienna|Hallstatt~47.5622~13.6493~Ancient salt-mining village
+CZE|Prague Castle~50.0909~14.4005~Largest ancient castle complex in the world|Charles Bridge~50.0865~14.4114~14th-century stone bridge|Kutná Hora~49.9611~15.2892~Medieval silver-mining town with Sedlec Ossuary
+POL|Wawel Castle~50.0540~19.9352~Royal castle of Polish kings in Kraków|Auschwitz-Birkenau~50.0343~19.1784~Nazi concentration camp memorial|Wieliczka Salt Mine~49.9833~20.0558~13th-century salt mine|Malbork Castle~54.0397~19.0286~Teutonic Order brick fortress
+RUS|Moscow Kremlin & Red Square~55.7520~37.6175~Fortified complex, seat of power since the 15th century|Hermitage Museum~59.9398~30.3146~Winter Palace of the Russian tsars|Peterhof Palace~59.8860~29.9087~Palace and fountains of Peter the Great
+UKR|Saint Sophia Cathedral (Kyiv)~50.4529~30.5143~11th-century Orthodox cathedral|Kyiv Pechersk Lavra~50.4347~30.5575~Historic Orthodox monastery|Lviv Old Town~49.8419~24.0315~Central European medieval city
+HUN|Buda Castle~47.4961~19.0396~Historic royal palace complex|Hungarian Parliament~47.5072~19.0457~19th-century Gothic Revival parliament|Fisherman's Bastion~47.5019~19.0348~Neo-Romanesque terrace
+ROU|Bran Castle~45.5149~25.3672~14th-century fortress linked to the Dracula legend|Palace of the Parliament~44.4275~26.0875~One of the world's heaviest buildings|Sighișoara~46.2197~24.7928~Inhabited medieval citadel
+BGR|Rila Monastery~42.1333~23.3400~10th-century Eastern Orthodox monastery|Nessebar~42.6600~27.7333~Ancient Thracian-Greek coastal town|Thracian Tomb of Kazanlak~42.6156~25.3961~4th-century BCE tomb with frescoes
+HRV|Diocletian's Palace (Split)~43.5081~16.4402~4th-century Roman imperial palace|Dubrovnik Old Town~42.6410~18.1100~Walled medieval city|Euphrasian Basilica (Poreč)~45.2286~13.5942~6th-century Byzantine basilica
+BIH|Stari Most (Mostar)~43.3375~17.8150~16th-century Ottoman bridge|Baščaršija (Sarajevo)~43.8597~18.4313~Ottoman-era old bazaar
+NLD|Anne Frank House~52.3752~4.8840~WWII hiding place and museum|Kinderdijk Windmills~51.8833~4.6333~18th-century windmill system
+BEL|Grand Place (Brussels)~50.8467~4.3525~Medieval guildhall square|Belfry of Bruges~51.2087~3.2247~13th-century medieval bell tower
+CHE|Chillon Castle~46.4142~6.9275~Medieval island castle on Lake Geneva|Abbey of St Gall~47.4229~9.3775~8th-century Benedictine abbey|Old Town of Bern~46.9480~7.4474~Medieval city centre
+NOR|Bryggen (Bergen)~60.3975~5.3236~Hanseatic wharf buildings|Urnes Stave Church~61.2967~7.3050~12th-century wooden church|Viking Ship Museum (Oslo)~59.9050~10.6847~9th-century Viking ships
+SWE|Vasa Museum~59.3280~18.0914~17th-century warship raised from the sea|Drottningholm Palace~59.3217~17.8861~Royal residence|Visby~57.6348~18.2948~Medieval Hanseatic walled city
+DNK|Kronborg Castle~56.0390~12.6212~Renaissance castle of Hamlet fame|Roskilde Cathedral~55.6419~12.0803~Royal burial cathedral, 12th century|Jelling Mounds~55.7561~9.4194~Viking-era royal monuments
+FIN|Suomenlinna~60.1450~24.9883~18th-century sea fortress in Helsinki
+MLT|Ħaġar Qim~35.8278~14.4420~Neolithic temple older than Stonehenge|Valletta~35.8989~14.5146~16th-century fortified capital
+CYP|Kourion~34.6642~32.8861~Ancient Greco-Roman city|Paphos Archaeological Park~34.7553~32.4094~Roman villas with mosaics
+EGY|Pyramids of Giza~29.9792~31.1342~Tombs of pharaohs, c. 2560 BCE|Karnak Temple~25.7188~32.6573~Vast ancient Egyptian temple complex|Abu Simbel~22.3372~31.6258~Rock temples of Ramesses II|Valley of the Kings~25.7402~32.6014~Royal tombs of the New Kingdom
+ETH|Rock-Hewn Churches of Lalibela~12.0319~39.0475~12th-century monolithic churches|Aksum~14.1303~38.7167~Ancient kingdom with giant obelisks|Fasil Ghebbi (Gondar)~12.6070~37.4690~17th-century royal enclosure
+MAR|Fes el-Bali~34.0650~-4.9733~Medieval walled medina|Aït Benhaddou~31.0472~-7.1290~Fortified earthen village|Volubilis~34.0722~-5.5547~Roman city ruins|Hassan II Mosque~33.6086~-7.6326~Monumental mosque on the Atlantic
+TUN|Carthage~36.8528~10.3233~Ancient Phoenician-Roman city|El Djem Amphitheatre~35.2964~10.7069~3rd-century Roman amphitheatre|Medina of Tunis~36.7991~10.1707~Medieval Arab city|Dougga~36.4222~9.2203~Roman-Numidian town
+LBY|Leptis Magna~32.6386~14.2944~Roman city of Septimius Severus|Cyrene~32.8250~21.8583~Ancient Greek colony|Sabratha~32.8037~12.4833~Roman theatre city
+DZA|Timgad~35.4842~6.4686~Roman colonial city, 100 CE|Djémila~36.3189~5.7358~Roman mountain town|Casbah of Algiers~36.7855~3.0605~Ottoman-era citadel and old town
+ZAF|Robben Island~-33.8070~18.3660~Prison where Nelson Mandela was held|Mapungubwe~-22.1894~29.3961~13th-century Iron Age kingdom|Cradle of Humankind~-26.0197~27.7928~Rich hominid fossil sites
+KEN|Fort Jesus (Mombasa)~-4.0626~39.6797~16th-century Portuguese fort|Lamu Old Town~2.2686~40.9020~Oldest Swahili settlement in East Africa
+TZA|Kilwa Kisiwani~-8.9583~39.5167~Medieval Swahili trading city|Stone Town (Zanzibar)~-6.1659~39.1925~Swahili-Arab trading port|Olduvai Gorge~-2.9958~35.3500~Early human fossil site
+ZWE|Great Zimbabwe~-20.2674~30.9338~Medieval stone city, 11th-15th century|Khami Ruins~-20.1472~28.2933~15th-century stone-walled city
+MLI|Timbuktu~16.7735~-3.0074~Medieval centre of Islamic scholarship|Great Mosque of Djenné~13.9056~-4.5553~Largest mud-brick building|Tomb of Askia~16.2833~-0.0500~15th-century pyramidal tomb in Gao
+SEN|Gorée Island~14.6667~-17.3984~Memorial of the Atlantic slave trade|Saint-Louis~16.0326~-16.5091~Former French colonial capital
+GHA|Cape Coast Castle~5.1054~-1.2466~17th-century slave-trade fort|Elmina Castle~5.0836~-1.3497~15th-century Portuguese fort|Larabanga Mosque~9.2200~-1.8500~Sudano-Sahelian mosque
+NGA|Osun-Osogbo Sacred Grove~7.7500~4.5500~Yoruba sacred forest|Kano City Walls~12.0000~8.5167~Medieval city fortifications|Sukur~10.7500~13.5833~Cultural landscape of the Sukur kingdom
+SDN|Meroë~16.9381~33.7500~Capital of the Kingdom of Kush|Jebel Barkal~18.5333~31.8333~Sacred Napatan temples|Naqa~16.2667~33.2833~Kushite temple complex
+MEX|Chichén Itzá~20.6843~-88.5678~Maya city with El Castillo pyramid|Teotihuacan~19.6925~-98.8438~Pyramids of the Sun and Moon|Palenque~17.4838~-92.0460~Maya city in the rainforest|Templo Mayor~19.4350~-99.1316~Aztec temple in Tenochtitlan
+GTM|Tikal~17.2220~-89.6237~Major Maya city, 4th century BCE onward|Antigua Guatemala~14.5586~-90.7295~Spanish colonial capital
+PER|Machu Picchu~-13.1631~-72.5450~15th-century Inca citadel|Sacsayhuamán~-13.5086~-71.9817~Inca fortress above Cusco|Nazca Lines~-14.7390~-75.1300~Giant geoglyphs, 500 BCE-500 CE|Chan Chan~-8.1058~-79.0747~Largest adobe city of the Americas
+BOL|Tiwanaku~-16.5547~-68.6733~Pre-Inca ceremonial city|Potosí~-19.5836~-65.7531~Colonial silver-mining city|Sucre~-19.0333~-65.2627~Colonial historic capital
+CHL|Rapa Nui Moai (Rano Raraku)~-27.1253~-109.2869~Giant stone statues of Easter Island|Valparaíso~-33.0472~-71.6127~19th-century port city
+BRA|Christ the Redeemer~-22.9519~-43.2105~Art Deco statue completed in 1931|Pelourinho (Salvador)~-12.9714~-38.5124~Colonial Portuguese old town|Ouro Preto~-20.3856~-43.5035~18th-century gold-rush town
+COL|Cartagena Old City~10.4236~-75.5516~16th-century fortified colonial port|San Agustín Archaeological Park~1.8873~-76.2909~Pre-Columbian megalithic statues|Ciudad Perdida~11.0383~-73.9250~Tairona city, c. 800 CE
+CUB|Old Havana~23.1370~-82.3500~16th-century colonial city|Trinidad~21.8022~-79.9842~Well-preserved sugar-trade town|Castillo del Morro~19.9689~-75.8742~17th-century Spanish fortress
+USA|Statue of Liberty~40.6892~-74.0445~Gift from France, dedicated in 1886|Independence Hall~39.9489~-75.1500~Where the Declaration of Independence was adopted|Mesa Verde~37.1853~-108.4618~Ancestral Puebloan cliff dwellings|The Alamo~29.4260~-98.4861~18th-century Spanish mission, 1836 battle site
+CAN|Old Quebec~46.8123~-71.2075~17th-century fortified colonial city|L'Anse aux Meadows~51.5953~-55.5333~Viking settlement, c. 1000 CE|Fortress of Louisbourg~45.9054~-59.9917~18th-century French fortress
+AUS|Uluru~-25.3444~131.0369~Sacred Aboriginal site of the Anangu|Sydney Opera House~-33.8568~151.2153~Landmark completed in 1973|Port Arthur~-43.1445~147.8500~19th-century convict settlement
+NZL|Waitangi Treaty Grounds~-35.2688~174.0800~Site where the 1840 Treaty was first signed|Larnach Castle~-45.8586~170.5500~Victorian-era castle in Dunedin`;
+var BN={AFG:"আফগানিস্তান",BGD:"বাংলাদেশ",IND:"ভারত",PAK:"পাকিস্তান",NPL:"নেপাল",BTN:"ভুটান",LKA:"শ্রীলঙ্কা",MDV:"মালদ্বীপ",MMR:"মিয়ানমার",CHN:"চীন",JPN:"জাপান",KOR:"দক্ষিণ কোরিয়া",PRK:"উত্তর কোরিয়া",THA:"থাইল্যান্ড",VNM:"ভিয়েতনাম",MYS:"মালয়েশিয়া",IDN:"ইন্দোনেশিয়া",SGP:"সিঙ্গাপুর",PHL:"ফিলিপাইন",KHM:"কম্বোডিয়া",IRN:"ইরান",IRQ:"ইরাক",SAU:"সৌদি আরব",ARE:"সংযুক্ত আরব আমিরাত",QAT:"কাতার",KWT:"কুয়েত",OMN:"ওমান",BHR:"বাহরাইন",YEM:"ইয়েমেন",JOR:"জর্ডান",LBN:"লেবানন",SYR:"সিরিয়া",ISR:"ইসরায়েল",PSE:"ফিলিস্তিন",TUR:"তুরস্ক",UZB:"উজবেকিস্তান",KAZ:"কাজাখস্তান",RUS:"রাশিয়া",UKR:"ইউক্রেন",GBR:"যুক্তরাজ্য",FRA:"ফ্রান্স",DEU:"জার্মানি",ITA:"ইতালি",ESP:"স্পেন",PRT:"পর্তুগাল",GRC:"গ্রিস",NLD:"নেদারল্যান্ডস",BEL:"বেলজিয়াম",CHE:"সুইজারল্যান্ড",SWE:"সুইডেন",NOR:"নরওয়ে",DNK:"ডেনমার্ক",POL:"পোল্যান্ড",EGY:"মিশর",ETH:"ইথিওপিয়া",KEN:"কেনিয়া",NGA:"নাইজেরিয়া",ZAF:"দক্ষিণ আফ্রিকা",MAR:"মরক্কো",DZA:"আলজেরিয়া",LBY:"লিবিয়া",SDN:"সুদান",USA:"যুক্তরাষ্ট্র",CAN:"কানাডা",MEX:"মেক্সিকো",BRA:"ব্রাজিল",ARG:"আর্জেন্টিনা",PER:"পেরু",CUB:"কিউবা",AUS:"অস্ট্রেলিয়া",NZL:"নিউজিল্যান্ড",ATA:"অ্যান্টার্কটিকা",GRL:"গ্রিনল্যান্ড"};
+/*ENDDATA*/
+var REGS=Object.keys(RAW),RCOL={Asia:"#ff8a65",Europe:"#64b5f6",Africa:"#ffd54f",Americas:"#81c784",Oceania:"#ba68c8",Antarctica:"#cfd8dc"},
+ RVIEW={Asia:[32,88,1.9],Europe:[52,15,1.35],Africa:[3,20,2.1],Americas:[8,-80,2.7],Oceania:[-24,150,2.2],Antarctica:[-82,0,2.6]};
+var C={},L=[],P=[];
+REGS.forEach(function(r){RAW[r].split("\n").forEach(function(l){l=l.trim();if(!l)return;var a=l.split("|"),o={a3:a[0],n:a[1],cap:a[2],cur:a[3],area:+a[4],lat:+a[5],lng:+a[6],reg:r,pl:[]};C[o.a3]=o;L.push(o)})});
+C.KOS=C.XKX;C.PSX=C.PSE;C.SDS=C.SSD;
+HPR.split("\n").forEach(function(l){l=l.trim();if(!l)return;var a=l.split("|"),c=C[a[0]];if(!c)return;a.slice(1).forEach(function(s){var q=s.split("~"),p={n:q[0],lat:+q[1],lng:+q[2],d:q[3]||"",a3:c.a3};c.pl.push(p);P.push(p)})});
+var RK={};L.slice().sort(function(a,b){return b.area-a.area}).forEach(function(c,i){RK[c.a3]=i+1});
+var ALPHA=L.slice().sort(function(a,b){return a.n<b.n?-1:1});
+var NMAP={};L.forEach(function(c){NMAP[c.n.toLowerCase()]=c.a3});
+[["united states of america","USA"],["republic of serbia","SRB"],["the bahamas","BHS"],["czech republic","CZE"],["swaziland","SWZ"],["macedonia","MKD"],["ivory coast","CIV"],["democratic republic of the congo","COD"],["republic of the congo","COG"],["united republic of tanzania","TZA"],["east timor","TLS"],["cape verde","CPV"],["republic of korea","KOR"],["federated states of micronesia","FSM"],["w. sahara","ESH"],["dem. rep. congo","COD"],["central african rep.","CAF"],["bosnia and herz.","BIH"],["dominican rep.","DOM"],["eq. guinea","GNQ"],["s. sudan","SSD"],["falkland is.","FLK"],["timor-leste","TLS"],["são tomé and principe","STP"],["st. vin. and gren.","VCT"],["saint kitts and nevis","KNA"],["antigua and barb.","ATG"],["solomon is.","SLB"],["marshall is.","MHL"]].forEach(function(a){NMAP[a[0]]=a[1]});
+var WKO={"United States":"United States","Georgia":"Georgia (country)","Congo":"Republic of the Congo","DR Congo":"Democratic Republic of the Congo","Micronesia":"Federated States of Micronesia","Palestine":"State of Palestine","Bahamas":"The Bahamas","Gambia":"The Gambia","Ireland":"Republic of Ireland","Antarctica":"Antarctica","Greenland":"Greenland","Panama":"Panama","Jordan":"Jordan"};
+var IMG="https://unpkg.com/three-globe/example/img/",
+ GEO=["https://cdn.jsdelivr.net/gh/vasturiano/globe.gl@master/example/datasets/ne_110m_admin_0_countries.geojson","https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson","https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"],
+ LIBS=["https://cdn.jsdelivr.net/npm/globe.gl@2/dist/globe.gl.min.js","https://unpkg.com/globe.gl@2/dist/globe.gl.min.js"];
+var g=null,booting=false,feats=[],selCode=null,selRec=null,hov=null,mode="sat",filt=null,showAll=false,rot=true,wk={},adhoc={},MA={sat:.34,night:.3,pol:.82};
+function X(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function rgba(h,a){var n=parseInt(h.slice(1),16);return"rgba("+(n>>16&255)+","+(n>>8&255)+","+(n&255)+","+a+")"}
+function fmtN(n){return n>=10?Math.round(n).toLocaleString("en-US"):String(+n.toFixed(2))}
+function fmtP(n){return n>=1e9?(n/1e9).toFixed(2)+" billion":n>=1e6?(n/1e6).toFixed(n>=1e7?0:1)+" million":Math.round(n).toLocaleString("en-US")}
+function cnt(r){return{Africa:"Africa","North America":"Americas","South America":"Americas",Asia:"Asia",Europe:"Europe",Oceania:"Oceania",Antarctica:"Antarctica"}[r]||null}
+/* ---------- overlay UI ---------- */
+var ov=document.createElement("div");ov.id="mapOv";ov.setAttribute("role","dialog");ov.setAttribute("aria-label","World map");
+ov.innerHTML='<div class="mTop"><h3>World Map · বিশ্বমানচিত্র</h3><div class="mSw"><input id="mQ" type="search" placeholder="Search country, capital, currency, place… (বাংলা ok)" autocomplete="off" aria-label="Search the map"><div id="mSug"></div></div><select id="mLay" aria-label="Map style"><option value="sat">Satellite</option><option value="night">Night lights</option><option value="pol">Political</option></select><button id="mRot" type="button" class="on">Rotate</button><button id="mHer" type="button">Heritage sites</button><button id="mHome" type="button">Reset</button><button id="mIns" type="button" class="go">Insert in page</button><button id="mX" type="button" aria-label="Close">✕</button></div><div id="mLeg"></div><div id="mBody"><div id="mHost"></div><div id="mLoad">Loading 3D globe…</div><div id="mDet"></div></div>';
+document.body.appendChild(ov);
+var host=$("mHost"),det=$("mDet");
+/* ---------- loading helpers ---------- */
+function loadJS(urls){return new Promise(function(res,rej){var i=0;(function next(){if(i>=urls.length)return rej(new Error("lib"));var s=document.createElement("script");s.src=urls[i++];s.onload=function(){res()};s.onerror=function(){s.remove();next()};document.head.appendChild(s)})()})}
+function getJSON(urls){return new Promise(function(res,rej){var i=0;(function next(){if(i>=urls.length)return rej(new Error("geo"));fetch(urls[i++]).then(function(r){if(!r.ok)throw 0;return r.json()}).then(res,next)})()})}
+/* ---------- feature -> record ---------- */
+function codeOf(f){var p=f.properties||{},ks=[p.ISO_A3,p.ISO_A3_EH,p.ADM0_A3,p["ISO3166-1-Alpha-3"],p.iso_a3,p.adm0_a3],i,nm;
+  for(i=0;i<ks.length;i++)if(ks[i]&&C[ks[i]])return C[ks[i]].a3;
+  nm=String(p.ADMIN||p.admin||p.NAME||p.name||"").toLowerCase();return NMAP[nm]||null}
+function recOf(f){if(f.__r!==undefined)return f.__r;var code=codeOf(f),p=f.properties||{},r;
+  if(code)r=C[code];else{var nm=p.ADMIN||p.admin||p.NAME||p.name||"Unknown";r=adhoc[nm];
+    if(!r){var b=bbox(f.geometry);r=adhoc[nm]={a3:"N:"+nm,n:nm,cap:"—",cur:"—",area:0,lat:b[0],lng:b[1],reg:cnt(p.CONTINENT||p.continent),pl:[],adhoc:1}}}
+  f.__r=r;return r}
+function bbox(g0){var x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;(function w(a){if(typeof a[0]==="number"){x0=Math.min(x0,a[0]);x1=Math.max(x1,a[0]);y0=Math.min(y0,a[1]);y1=Math.max(y1,a[1])}else a.forEach(w)})(g0.coordinates);return[(y0+y1)/2,(x0+x1)/2]}
+/* ---------- globe layers ---------- */
+function capCol(f){var c=recOf(f),base=c&&c.reg?RCOL[c.reg]:"#90a4ae";
+  if(filt&&(!c||c.reg!==filt))return"rgba(70,80,95,.12)";
+  if(c&&c.a3===selCode)return"rgba(212,255,58,.9)";
+  if(f===hov)return"rgba(255,255,255,.6)";
+  return rgba(base,MA[mode])}
+function altF(f){var c=recOf(f);return f===hov||(c&&c.a3===selCode)?.035:.008}
+function tip(f){var c=recOf(f);if(!c)return"";return'<div class="mTip"><b>'+X(c.n)+'</b>'+(BN[c.a3]?' · '+X(BN[c.a3]):'')+'<br>Capital: '+X(c.cap)+(c.area?'<br>Area: '+fmtN(c.area)+' km²':'')+'</div>'}
+function refresh(){g.polygonCapColor(function(f){return capCol(f)}).polygonAltitude(function(f){return altF(f)})}
+function pts(){var a=L.map(function(c){return{k:"c",lat:c.lat,lng:c.lng,code:c.a3,name:c.cap,cn:c.n}});
+  if(showAll)P.forEach(function(p){a.push({k:"p",lat:p.lat,lng:p.lng,p:p,name:p.n})});
+  else if(selRec)selRec.pl.forEach(function(p){a.push({k:"p",lat:p.lat,lng:p.lng,p:p,name:p.n})});
+  return a}
+function upPts(){g.pointsData(pts());
+  var lb=[];if(selRec){if(!selRec.adhoc&&selRec.cap&&selRec.reg!=="Antarctica")lb.push({lat:selRec.lat,lng:selRec.lng,t:selRec.cap.split(" (")[0],s:.75,c:"#22d3ee"});selRec.pl.forEach(function(p){lb.push({lat:p.lat,lng:p.lng,t:p.n,s:.55,c:"#ffcf5a"})})}
+  g.labelsData(lb)}
+function ringAt(lat,lng){g.ringsData([{lat:lat,lng:lng}])}
+function layer(m){mode=m;var u={sat:"earth-blue-marble.jpg",night:"earth-night.jpg",pol:"earth-dark.jpg"}[m];g.globeImageUrl(IMG+u);g.bumpImageUrl(m==="pol"?null:IMG+"earth-topology.png");refresh()}
+function stopRot(){rot=false;if(g)g.controls().autoRotate=false;$("mRot").classList.remove("on")}
+function fly(lat,lng,alt,ms){g.pointOfView({lat:lat,lng:lng,altitude:alt},ms===undefined?1100:ms)}
+/* ---------- init ---------- */
+function initGlobe(){
+  g=Globe({rendererConfig:{antialias:true,alpha:true,preserveDrawingBuffer:true}})(host)
+   .width(host.clientWidth||innerWidth).height(host.clientHeight||innerHeight)
+   .backgroundColor("#05070d").backgroundImageUrl(IMG+"night-sky.png")
+   .globeImageUrl(IMG+"earth-blue-marble.jpg").bumpImageUrl(IMG+"earth-topology.png")
+   .showAtmosphere(true).atmosphereColor("#5ab0ff").atmosphereAltitude(.22)
+   .polygonSideColor(function(){return"rgba(30,60,90,.35)"}).polygonStrokeColor(function(){return"rgba(255,255,255,.4)"})
+   .polygonsTransitionDuration(250).polygonLabel(function(f){return tip(f)})
+   .onPolygonHover(function(f){hov=f||null;host.style.cursor=f?"pointer":"grab";refresh()})
+   .onPolygonClick(function(f){var c=recOf(f);if(c)pick(c)})
+   .pointLat("lat").pointLng("lng").pointAltitude(function(d){return d.k==="c"?.012:.03}).pointRadius(function(d){return d.k==="c"?.2:.32})
+   .pointColor(function(d){return d.k==="c"?"#22d3ee":"#ffb020"})
+   .pointLabel(function(d){return d.k==="c"?'<div class="mTip"><b>'+X(d.name)+'</b><br>Capital of '+X(d.cn)+'</div>':'<div class="mTip"><b>'+X(d.p.n)+'</b><br>'+X(d.p.d)+'</div>'})
+   .onPointClick(function(d){if(d.k==="c")pick(C[d.code]);else flyPlace(d.p)})
+   .labelLat("lat").labelLng("lng").labelText("t").labelSize(function(d){return d.s}).labelDotRadius(0).labelColor(function(d){return d.c}).labelResolution(2).labelAltitude(.014)
+   .ringColor(function(){return function(t){return"rgba(212,255,58,"+(1-t)+")"}}).ringMaxRadius(4).ringPropagationSpeed(3).ringRepeatPeriod(1300);
+  var ct=g.controls();ct.autoRotate=true;ct.autoRotateSpeed=.35;ct.enableDamping=true;ct.minDistance=115;ct.maxDistance=600;
+  g.pointsData(pts());refresh();
+  fly(23.8,90.4,2.3,0);
+  if(window.ResizeObserver)new ResizeObserver(sizeNow).observe(host);else window.addEventListener("resize",sizeNow);
+  ct.addEventListener("start",function(){if(rot){stopRot()}})}
+function loadGeo(){$("mLoad").textContent="Loading country borders…";
+  return getJSON(GEO).then(function(j){feats=(j.features||[]).filter(function(f){var n=f.properties&&(f.properties.ADMIN||f.properties.NAME||f.properties.name);return n!=="Antarctica"||true});
+    feats.forEach(function(f){var r=recOf(f),p=f.properties||{};if(!r)return;var pop=+(p.POP_EST||p.pop_est||0);if(pop>0)r.pop=(r.pop||0)+pop;var i2=p.ISO_A2_EH&&p.ISO_A2_EH!=="-99"?p.ISO_A2_EH:(p.ISO_A2&&p.ISO_A2!=="-99"?p.ISO_A2:null);if(i2&&!r.iso2)r.iso2=i2});
+    g.polygonsData(feats);refresh();$("mLoad").style.display="none"})
+   .catch(function(){$("mLoad").style.display="none";toast("Borders could not load — capitals are still shown")})}
+function sizeNow(){if(g){g.width(host.clientWidth).height(host.clientHeight)}}
+function sizeSoon(){setTimeout(sizeNow,60);setTimeout(sizeNow,320)}
+/* ---------- open / close ---------- */
+function openMap(){morePop.style.display="none";ov.classList.add("on");
+  if(g){if(g.resumeAnimation)g.resumeAnimation();sizeSoon();return}
+  if(booting)return;booting=true;var ld=$("mLoad");ld.style.display="block";ld.textContent="Loading 3D globe…";
+  (window.Globe?Promise.resolve():loadJS(LIBS)).then(function(){initGlobe();return loadGeo()}).catch(function(){booting=false;ld.style.display="block";ld.innerHTML="Could not load the 3D library.<br>Check your internet connection and try again."})}
+function closeMap(){ov.classList.remove("on");if(g&&g.pauseAnimation)g.pauseAnimation();$("mSug").style.display="none"}
+/* ---------- selection + card ---------- */
+function pick(c,noFly){if(!c)return;selCode=c.a3;selRec=c;stopRot();card(c);refresh();upPts();ringAt(c.lat,c.lng);
+  if(!noFly){var a=c.area;fly(c.lat,c.lng,a>3e6?1.7:a>3e5?1.05:.65)}
+  ov.classList.add("has");sizeSoon()}
+function flyPlace(p){stopRot();fly(p.lat,p.lng,.22,1200);ringAt(p.lat,p.lng)}
+function closeDet(){selCode=null;selRec=null;ov.classList.remove("has");if(g){refresh();upPts();g.ringsData([]);g.labelsData([])}sizeSoon()}
+function wkUrl(t){return"https://en.wikipedia.org/wiki/"+encodeURIComponent(t.replace(/ /g,"_"))}
+function wkSearch(t){return"https://en.wikipedia.org/w/index.php?search="+encodeURIComponent(t)}
+function card(c){var col=c.reg?RCOL[c.reg]:"#90a4ae",bn=BN[c.a3],a=c.area,rows="";
+  function row(k,v){return"<tr><td>"+k+"</td><td>"+v+"</td></tr>"}
+  rows+=row("Capital · রাজধানী",X(c.cap));rows+=row("Currency · মুদ্রা",X(c.cur));
+  rows+=row("Area · আয়তন",a?fmtN(a)+" km²<br><small>"+fmtN(a*.386102)+" sq mi"+(RK[c.a3]?" · #"+RK[c.a3]+" largest":"")+"</small>":"—");
+  if(c.pop)rows+=row("Population · জনসংখ্যা",fmtP(c.pop));
+  rows+=row("Region",X(c.reg||"—"));rows+=row("Capital coordinates",c.lat.toFixed(2)+"°, "+c.lng.toFixed(2)+"°");
+  var h='<div class="dh">'+(c.iso2?'<img class="fl" alt="" src="https://flagcdn.com/w160/'+c.iso2.toLowerCase()+'.png" onerror="this.style.display=\'none\'">':'')+'<div><h2>'+X(c.n)+'</h2>'+(bn?'<div class="bn">'+X(bn)+'</div>':'')+'<div class="rgn" style="--c:'+col+'">'+X(c.reg||"—")+'</div></div></div><table>'+rows+'</table>'
+  +'<h4>Historical places · ঐতিহাসিক স্থান</h4>'
+  +(c.pl.length?c.pl.map(function(p,i){return'<div class="pl" data-p="'+i+'"><b>'+X(p.n)+'</b><span>'+X(p.d)+'</span><a href="'+wkSearch(p.n)+'" target="_blank" rel="noopener">Wikipedia ↗</a></div>'}).join(""):'<div class="pe">No curated places for this country yet — <a href="'+wkSearch("Historic sites in "+c.n)+'" target="_blank" rel="noopener">search Wikipedia ↗</a></div>')
+  +'<h4>About</h4><div id="mWk" class="wkx">Loading…</div>'
+  +'<div class="nav"><button type="button" id="mPrev">← Prev</button><button type="button" id="mClose2">Close</button><button type="button" id="mNext">Next →</button></div>';
+  det.innerHTML=h;det.scrollTop=0;
+  $("mPrev").onclick=function(){step(-1)};$("mNext").onclick=function(){step(1)};$("mClose2").onclick=closeDet;
+  var code=c.a3,t=WKO[c.n]||c.n;
+  function show(o){if(selCode!==code||!$("mWk"))return;$("mWk").innerHTML=o?X(o.t)+' <a href="'+X(o.u)+'" target="_blank" rel="noopener">Wikipedia ↗</a>':'<a href="'+wkUrl(t)+'" target="_blank" rel="noopener">Read about '+X(c.n)+' on Wikipedia ↗</a>'}
+  if(wk[code]!==undefined){show(wk[code]);return}
+  fetch("https://en.wikipedia.org/api/rest_v1/page/summary/"+encodeURIComponent(t.replace(/ /g,"_"))).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){var x=(j.extract||"").trim();if(x.length>420){x=x.slice(0,420);var k=x.lastIndexOf(". ");x=k>150?x.slice(0,k+1):x+"…"}wk[code]=x?{t:x,u:(j.content_urls&&j.content_urls.desktop&&j.content_urls.desktop.page)||wkUrl(t)}:null;show(wk[code])}).catch(function(){wk[code]=null;show(null)})}
+function step(d){var i=ALPHA.indexOf(selRec),n=ALPHA.length;if(i<0)i=0;pick(ALPHA[(i+d+n)%n])}
+det.addEventListener("click",function(e){if(e.target.closest("a"))return;var x=e.target.closest(".pl");if(x&&selRec){var p=selRec.pl[+x.dataset.p];if(p)flyPlace(p)}});
+/* ---------- search ---------- */
+var IDX=[];L.forEach(function(c){IDX.push({t:"c",k:(c.n+" "+c.cap+" "+c.cur+" "+(BN[c.a3]||"")).toLowerCase(),lab:c.n,sub:c.cap+" · "+c.reg+(BN[c.a3]?" · "+BN[c.a3]:""),c:c})});
+P.forEach(function(p){IDX.push({t:"p",k:(p.n+" "+p.d).toLowerCase(),lab:p.n,sub:"Historical site · "+C[p.a3].n,p:p})});
+var sugL=[];
+function suggest(){var q=$("mQ").value.trim().toLowerCase(),box=$("mSug");if(!q){box.style.display="none";return}
+  sugL=IDX.filter(function(o){return o.k.indexOf(q)>-1}).sort(function(a,b){var A=a.lab.toLowerCase().indexOf(q)===0?0:1,B=b.lab.toLowerCase().indexOf(q)===0?0:1;return A-B||(a.t==="c"?0:1)-(b.t==="c"?0:1)}).slice(0,9);
+  box.innerHTML=sugL.length?sugL.map(function(o,i){return'<button type="button" data-i="'+i+'"><b>'+(o.t==="c"?"":"🏛 ")+X(o.lab)+'</b><small>'+X(o.sub)+'</small></button>'}).join(""):'<div class="none">No match</div>';box.style.display="block"}
+function applySug(o){$("mSug").style.display="none";$("mQ").value="";if(!g)return;if(o.t==="c")pick(o.c);else{var c=C[o.p.a3];pick(c,true);flyPlace(o.p)}}
+$("mQ").oninput=suggest;$("mQ").onfocus=suggest;
+$("mQ").onkeydown=function(e){if(e.key==="Enter"){e.preventDefault();if(sugL.length)applySug(sugL[0])}};
+$("mSug").onclick=function(e){var b=e.target.closest("button");if(b)applySug(sugL[+b.dataset.i])};
+document.addEventListener("pointerdown",function(e){if(!e.target.closest||!e.target.closest(".mSw"))$("mSug").style.display="none"},true);
+/* ---------- legend / toolbar ---------- */
+function legend(){var h="";REGS.forEach(function(r){var n=L.filter(function(c){return c.reg===r}).length;h+='<button type="button" data-r="'+r+'" class="'+(filt===r?"on":"")+'"><i style="--c:'+RCOL[r]+'"></i>'+r+' <small>'+n+'</small></button>'});
+  h+='<span class="cnt">'+L.length+' countries · '+P.length+' historical sites</span>';$("mLeg").innerHTML=h}
+legend();
+$("mLeg").onclick=function(e){var b=e.target.closest("button");if(!b)return;var r=b.dataset.r;filt=filt===r?null:r;legend();if(g){refresh();if(filt){stopRot();var v=RVIEW[filt];fly(v[0],v[1],v[2],1200)}}};
+$("mLay").onchange=function(){if(g)layer(this.value)};
+$("mRot").onclick=function(){if(!g)return;rot=!rot;g.controls().autoRotate=rot;this.classList.toggle("on",rot)};
+$("mHer").onclick=function(){showAll=!showAll;this.classList.toggle("on",showAll);if(g)upPts()};
+$("mHome").onclick=function(){filt=null;legend();closeDet();if(g){refresh();fly(23.8,90.4,2.3,1200)}};
+$("mX").onclick=closeMap;
+document.addEventListener("keydown",function(e){if(!ov.classList.contains("on"))return;
+  if(e.key==="Escape"){e.stopPropagation();e.preventDefault();if($("mSug").style.display==="block")$("mSug").style.display="none";else if(ov.classList.contains("has"))closeDet();else closeMap()}},true);
+/* ---------- insert a snapshot into the current page ---------- */
+$("mIns").onclick=function(){
+  if(!g||!cur||!els.length){toast("Open a note first (and wait for the globe to load)");return}
+  try{var rd=g.renderer();rd.render(g.scene(),g.camera());var src=rd.domElement,sw=src.width,sh=src.height,s=Math.min(1,1400/sw),w=Math.round(sw*s),h=Math.round(sh*s),
+      info=selRec&&!selRec.adhoc?150:0,c=document.createElement("canvas");c.width=w;c.height=h+info;var x=c.getContext("2d");
+    x.fillStyle="#05070d";x.fillRect(0,0,c.width,c.height);x.drawImage(src,0,0,w,h);
+    if(info){x.fillStyle="#12141a";x.fillRect(0,h,w,info);x.fillStyle="#d4ff3a";x.font="bold 34px sans-serif";x.textBaseline="top";x.fillText(selRec.n+(BN[selRec.a3]?"  ·  "+BN[selRec.a3]:""),24,h+16);
+      x.fillStyle="#e8eaee";x.font="24px sans-serif";x.fillText("Capital: "+selRec.cap+"     Currency: "+selRec.cur,24,h+66);
+      x.fillText("Area: "+fmtN(selRec.area)+" km²"+(selRec.pl.length?"     Historical: "+selRec.pl.slice(0,3).map(function(p){return p.n}).join(", "):""),24,h+104)}
+    var data=c.toDataURL("image/png"),pg=cur.pages[Math.min(ap,cur.pages.length-1)],i=cur.pages.indexOf(pg),iw=W-60,ih=iw*c.height/c.width;
+    if(ih>pg.h-40){ih=pg.h-40;iw=ih*c.width/c.height}
+    snap(i);pg.objs.push({t:"i",id:uid(),src:data,x:(W-iw)/2,y:Math.max(20,(pg.h-ih)/2),w:iw,h:ih});
+    closeMap();setTool("select");sel={page:i,ids:[pg.objs.length-1]};draw(i);upd();save();els[i].wrap.scrollIntoView({block:"center"});toast("Map added to the page — resize or write over it")}
+  catch(e){toast("Could not capture the map (browser blocked the image)")}};
+/* ---------- menu buttons ---------- */
+var ICO='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg>';
+var mb=document.createElement("button");mb.type="button";mb.id="mapBtnMenu";mb.innerHTML=ICO+"<span>World map (3D)</span>";mb.onclick=openMap;morePop.insertBefore(mb,morePop.firstChild);
+var gb=document.createElement("button");gb.type="button";gb.id="mapBtn";gb.title="World map (3D globe)";gb.setAttribute("aria-label","World map");gb.innerHTML=ICO;gb.onclick=function(e){e.stopPropagation();openMap()};pn.appendChild(gb);
+window.__map={open:openMap,data:C};
 })();
 
 /* ---------- calculator (Casio-style natural display) ---------- */
