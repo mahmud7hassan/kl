@@ -7,6 +7,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>My Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.2/math.min.js"></script>
@@ -23,7 +26,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0}
 body{height:100vh;height:100dvh}
-body{font-family:system-ui,"Noto Sans Bengali","Segoe UI",sans-serif;color:var(--ink);background:var(--bgi,var(--bg));display:flex;overflow:hidden}
+body{font-family:"Inter","Noto Sans Bengali",system-ui,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-feature-settings:"cv11","ss03";color:var(--ink);background:var(--bgi,var(--bg));display:flex;overflow:hidden}
 button,input,select,textarea{font:inherit;color:inherit}
 button,select{cursor:pointer;border:1px solid var(--line);background:var(--surf);border-radius:var(--r);padding:6px 11px;min-height:38px}
 button:hover,select:hover{border-color:var(--acc)}
@@ -31,7 +34,7 @@ button:hover,select:hover{border-color:var(--acc)}
 button.on{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
 button:disabled{opacity:.4;cursor:default}
 aside{width:280px;flex:none;background:var(--side);color:#e6f2f1;display:flex;flex-direction:column;padding:12px;gap:8px;padding-top:max(12px,env(safe-area-inset-top))}
-aside h1{font-size:20px;margin:4px 4px 0}
+aside h1{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:4px 4px 0}
 aside input[type=search]{width:100%;padding:10px 12px;border-radius:var(--r);border:0;background:var(--side2);color:#fff}
 aside input::placeholder{color:#9cc2c0}
 aside button{background:var(--side2);border-color:var(--side2);color:#e6f2f1}
@@ -75,7 +78,7 @@ button svg{display:block}
 #shapePop{position:fixed;z-index:20;background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 8px 28px rgba(0,0,0,.25);display:none;flex-direction:column;gap:6px}
 #shapePop .sg{display:flex;flex-wrap:wrap;gap:4px;max-width:200px}
 #shapePop .sg+.sg{border-top:1px solid var(--line);padding-top:6px}.ib{padding:7px 9px}
-.sheet textarea.tbx{inset:auto;border:1.5px dashed var(--acc);background:transparent;z-index:3;overflow:hidden;font-family:system-ui,"Noto Sans Bengali",sans-serif}
+.sheet textarea.tbx{inset:auto;border:1.5px dashed var(--acc);background:transparent;z-index:3;overflow:hidden;font-family:"Inter","Noto Sans Bengali",system-ui,sans-serif}
 .drawing .sheet textarea.tbx{pointer-events:auto}
 .fsonly{display:none}
 body.fs .fsonly{display:inline-block}
@@ -415,6 +418,10 @@ body.fs #thumbs{padding-top:10px}
 /* Pen panel: size + tools + all colors in one popup */
 #dtools{flex-direction:column;align-items:stretch;gap:10px;padding:12px;border-radius:16px;white-space:normal;width:min(440px,calc(100vw - 16px))}
 .bar{z-index:17}
+#savePop{position:fixed;z-index:60;display:none;width:250px;background:#1b1d23;border:1px solid #2c2f37;border-radius:14px;padding:6px;box-shadow:0 8px 28px rgba(0,0,0,.4)}
+#savePop button{display:block;width:100%;text-align:left;background:transparent;border:0;color:#e8eaee;padding:10px 12px;border-radius:10px;min-height:0}
+#savePop button:hover{background:#2a2d36}
+#savePop b{display:block;font-weight:600;font-size:14px}#savePop small{display:block;color:#9aa0ab;font-size:12px;margin-top:2px}
 #pnav button:disabled{opacity:.35}
 .zc{display:none!important} /* zoom −, Fit, + hidden for now: delete this line to bring them back */
 #dtools.pp-min{display:none!important}
@@ -490,7 +497,7 @@ body.fs #thumbs{padding-top:10px}
 #mDet .nav{display:flex;gap:6px;margin-top:14px}
 #mDet button{background:#262932;color:#e8eaee;border:1px solid #343843;border-radius:10px;min-height:38px;padding:4px 12px;flex:1}
 #mDet button:hover{border-color:#d4ff3a}
-.mTip{background:rgba(18,20,26,.92);color:#e8eaee;border:1px solid #343843;border-radius:8px;padding:6px 10px;font:13px/1.4 system-ui,sans-serif;max-width:240px}
+.mTip{background:rgba(18,20,26,.92);color:#e8eaee;border:1px solid #343843;border-radius:8px;padding:6px 10px;font:13px/1.4 "Inter",system-ui,sans-serif;max-width:240px}
 @media(max-width:820px){
  #mapOv .mTop h3{display:none}
  #mapOv.has #mHost{right:0;bottom:46vh}
@@ -507,7 +514,7 @@ body.fs #thumbs{padding-top:10px}
   <input type="search" id="q" placeholder="Search notes">
   <ul id="list"></ul>
   <select id="theme" aria-label="Theme"><option value="teal">Theme: Teal</option><option value="dark">Theme: Dark</option><option value="midnight">Theme: Midnight blue</option><option value="ocean">Theme: Ocean</option><option value="forest">Theme: Forest</option><option value="rose">Theme: Rose</option><option value="purple">Theme: Purple</option><option value="amber">Theme: Amber</option><option value="mono">Theme: Graphite</option><option value="sea">Theme: Sea</option><option value="deepsea">Theme: Deep sea</option><option value="cinematic">Theme: Cinematic</option><option value="sunset">Theme: Sunset</option><option value="sky">Theme: Sky</option><option value="neon">Theme: Neon night</option><option value="coffee">Theme: Coffee</option><option value="arctic">Theme: Arctic</option><option value="sakura">Theme: Sakura</option></select>
-  <div class="row"><button id="bkp">Backup</button><button id="rst">Restore</button></div>
+  <div class="row"><button id="bkp">Save</button><button id="rst">Upload</button></div>
 </aside>
 
 <main id="main">
@@ -562,13 +569,13 @@ body.fs #thumbs{padding-top:10px}
 </main>
 <input type="file" id="imgFile" accept="image/*" hidden>
 <input type="file" id="pdfFile" accept="application/pdf" hidden>
-<input type="file" id="jsonFile" accept="application/json" hidden>
+<input type="file" id="jsonFile" accept=".json,application/json" hidden>
 <div id="toast" role="status"></div>
 
 <script>
 (function(){
 var W=900,CELL=W/28.125,$=function(i){return document.getElementById(i)};
-var editObj=null,editTA=null,editI=0,FONT='system-ui,"Noto Sans Bengali",sans-serif';
+var editObj=null,editTA=null,editI=0,FONT='"Inter","Noto Sans Bengali",system-ui,sans-serif';
 var db=null,notes=[],cur=null,ap=0,tool="type",shapeKind="line",color="#14202b",hist=[],redoS=[],sel=null,penSeen=false,els=[],drag=null,clip=null,ROT=34,lastPen=0,handErase=true,HL_HOLD=5000,HL_FADE=1200,HL_A=.8,HL_ON=false,PALM_PX=48;
 var COLORS=["#000000","#14202b","#6b7280","#ffff00","#ffffff","#7f1d1d","#dc2626","#f97316","#f59e0b","#facc15","#a3e635","#16a34a","#065f46","#14b8a6","#06b6d4","#2563eb","#1e3a8a","#6366f1","#9333ea","#d946ef","#ec4899","#be185d","#92400e","#78350f"];
 var PAPERS={white:["#ffffff","#d5e0e8","#14202b"],yellow:["#fff9d6","#eadfa6","#2b2410"],gray:["#eceff1","#cfd6da","#14202b"],blue:["#e8f1fd","#c5d8f0","#10243d"],mint:["#e6f6ec","#c3e3cf","#102b1b"],pink:["#fdeaf0","#f0c9d6","#3a1624"],dark:["#23272e","#3a404a","#e8ecf1"],black:["#0b0b0c","#2a2c30","#f0f0f0"],board:["#1f3a2e","#35584a","#f1f5ef"],sea:["#dff4f7","#b2dce5","#0b3446"],sand:["#f6ead3","#e3d2ae","#3a2a12"],deepsea:["#0a2a3a","#1d4a60","#e3f6f9"],cinema:["#15171c","#2c303a","#f3ece0"]};
@@ -968,7 +975,7 @@ $("pdfOut").onclick=async function(){
       else if(cur.paper!=="blank"){x.strokeStyle=PP[1];x.lineWidth=1;x.beginPath();
         for(var yy=0;yy<pg.h;yy+=CELL){x.moveTo(0,yy);x.lineTo(W,yy)}
         if(cur.paper==="grid")for(var xx=0;xx<W;xx+=CELL){x.moveTo(xx,0);x.lineTo(xx,pg.h)}x.stroke()}
-      x.fillStyle=PP[2];x.font=(W/45)+'px system-ui,"Noto Sans Bengali",sans-serif';
+      x.fillStyle=PP[2];x.font=(W/45)+'px "Inter","Noto Sans Bengali",system-ui,sans-serif';
       var padX=W/32,maxW=W-2*padX,row=0;
       pg.text.split("\n").forEach(function(par){var line="";par.split(" ").forEach(function(w){var t=line?line+" "+w:w;
         if(x.measureText(t).width>maxW&&line){x.fillText(line,padX,(row+.72)*CELL);row++;line=w}else line=t});x.fillText(line,padX,(row+.72)*CELL);row++});
@@ -980,11 +987,23 @@ $("pdfOut").onclick=async function(){
   catch(e){toast("PDF export failed — try a lower quality")}};
 
 /* ---------- backup ---------- */
-$("bkp").onclick=function(){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(notes)],{type:"application/json"}));a.download="my-notes-backup.json";a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},1500)};
+function saveJson(){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(notes)],{type:"application/json"}));a.download="my-notes-backup.json";a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},1500)}
+var savePop=document.createElement("div");savePop.id="savePop";document.body.appendChild(savePop);
+function saveOpt(t,sub,f){var b=document.createElement("button");b.type="button";b.innerHTML="<b>"+t+"</b><small>"+sub+"</small>";b.onclick=function(){savePop.style.display="none";f()};savePop.appendChild(b)}
+saveOpt("PDF · High quality","This note as a sharp PDF",function(){
+  if(!cur){toast("Open a note first");return}
+  var q=$("pdfq"),old=q.value;q.value="3";try{$("pdfOut").onclick()}finally{q.value=old}});
+saveOpt("JSON · Full backup","All notes, editable and re-uploadable",saveJson);
+$("bkp").onclick=function(e){e.stopPropagation();if(savePop.style.display==="block"){savePop.style.display="none";return}
+  var r=this.getBoundingClientRect();savePop.style.display="block";
+  savePop.style.left=Math.max(8,Math.min(r.left,innerWidth-savePop.offsetWidth-8))+"px";
+  savePop.style.top=Math.max(8,r.top-savePop.offsetHeight-8)+"px"};
+document.addEventListener("pointerdown",function(e){if(!savePop.contains(e.target)&&e.target!==$("bkp"))savePop.style.display="none"},true);
+document.addEventListener("keydown",function(e){if(e.key==="Escape")savePop.style.display="none"});
 $("rst").onclick=function(){$("jsonFile").click()};
 $("jsonFile").onchange=function(){var f=this.files[0];this.value="";if(!f)return;var r=new FileReader();r.onload=function(){
   try{var have={};notes.forEach(function(n){have[n.id]=1});var add=JSON.parse(r.result).filter(function(n){return n&&n.id&&n.pages&&!have[n.id]});
-    add.forEach(function(n){notes.push(n);dbPut(n)});renderList();toast(add.length+" note(s) restored");if(!cur&&notes.length)open(notes[0].id)}
+    add.forEach(function(n){notes.push(n);dbPut(n)});renderList();toast(add.length+" note(s) uploaded");if(!cur&&notes.length)open(notes[0].id)}
   catch(e){toast("Could not read this file")}};r.readAsText(f)};
 
 /* ---------- text boxes ---------- */
@@ -1161,6 +1180,7 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape")colorPop.sty
 /* canvas-এ pointerdown এ preventDefault হয় বলে click আসে না; তাই pointerdown এ popup বন্ধ করা হচ্ছে */
 document.addEventListener("pointerdown",function(e){var t=e.target;if(!colorPop.contains(t)&&!$("colorBtn").contains(t))colorPop.style.display="none";if(!pop.contains(t)&&!$("shapeBtn").contains(t))pop.style.display="none"},true);
 /* লেখা/আঁকার সময় pen panel লুকানো থাকে; নিজে থেকে আর ফিরে আসে না — toolbar-এ tap করলে তবেই দেখা যাবে */
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){try{if(cur)drawAll()}catch(e){}});
 (function(){var B=document.body;
   document.addEventListener("pointerdown",function(e){
     if(e.target.tagName==="CANVAS"){B.classList.add("writing")}
@@ -1189,7 +1209,7 @@ tmBtn.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" str
 
 /* ---------- screenshot: save the current page as a PNG ---------- */
 ICON.cam='<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>';
-var shotBtn=document.createElement("button");shotBtn.id="shotBtn";shotBtn.type="button";setIcon(shotBtn,"cam","Screenshot (save this page as image)");pn.appendChild(shotBtn);
+var shotBtn=document.createElement("button");shotBtn.id="shotBtn";shotBtn.type="button";setIcon(shotBtn,"cam","Screenshot (save this page as image)");shotBtn.insertAdjacentHTML("beforeend","<span>Screenshot</span>");morePop.insertBefore(shotBtn,morePop.firstChild);
 shotBtn.onclick=async function(){
   if(!cur||!cur.pages.length){toast("Open a note first");return}
   var i=Math.min(ap,cur.pages.length-1),pg=cur.pages[i];
@@ -1201,7 +1221,7 @@ shotBtn.onclick=async function(){
     else if(cur.paper!=="blank"){x.strokeStyle=PP[1];x.lineWidth=1;x.beginPath();
       for(var yy=0;yy<pg.h;yy+=CELL){x.moveTo(0,yy);x.lineTo(W,yy)}
       if(cur.paper==="grid")for(var xx=0;xx<W;xx+=CELL){x.moveTo(xx,0);x.lineTo(xx,pg.h)}x.stroke()}
-    x.fillStyle=PP[2];x.font=(W/45)+'px system-ui,"Noto Sans Bengali",sans-serif';
+    x.fillStyle=PP[2];x.font=(W/45)+'px "Inter","Noto Sans Bengali",system-ui,sans-serif';
     var padX=W/32,maxW=W-2*padX,row=0;
     pg.text.split("\n").forEach(function(par){var line="";par.split(" ").forEach(function(w){var t=line?line+" "+w:w;
       if(x.measureText(t).width>maxW&&line){x.fillText(line,padX,(row+.72)*CELL);row++;line=w}else line=t});x.fillText(line,padX,(row+.72)*CELL);row++});
@@ -1323,7 +1343,7 @@ function thPaint(i){var it=thItems[i];if(!it||!cur||!cur.pages[i])return;it.dirt
   if(!pg.bg&&cur.paper!=="blank"){x.strokeStyle=P[1];x.lineWidth=1/S>1?1/S:1;x.beginPath();
     for(var yy=0;yy<pg.h;yy+=CELL){x.moveTo(0,yy);x.lineTo(W,yy)}
     if(cur.paper==="grid")for(var xx=0;xx<W;xx+=CELL){x.moveTo(xx,0);x.lineTo(xx,pg.h)}x.stroke()}
-  if(pg.text&&pg.text.trim()){x.fillStyle=P[2];x.font=(W/45)+'px system-ui,"Noto Sans Bengali",sans-serif';var padX=W/32,maxW=W-2*padX,row=0;
+  if(pg.text&&pg.text.trim()){x.fillStyle=P[2];x.font=(W/45)+'px "Inter","Noto Sans Bengali",system-ui,sans-serif';var padX=W/32,maxW=W-2*padX,row=0;
     pg.text.split("\n").forEach(function(par){if(row>40)return;var line="";par.split(" ").forEach(function(wd){var t=line?line+" "+wd:wd;
       if(x.measureText(t).width>maxW&&line){x.fillText(line,padX,(row+.72)*CELL);row++;line=wd}else line=t});x.fillText(line,padX,(row+.72)*CELL);row++})}
   for(var k=0;k<pg.objs.length;k++){try{drawObj(x,pg.objs[k])}catch(_){}}}
@@ -2074,7 +2094,7 @@ $("mIns").onclick=function(){
 /* ---------- menu buttons ---------- */
 var ICO='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg>';
 var mb=document.createElement("button");mb.type="button";mb.id="mapBtnMenu";mb.innerHTML=ICO+"<span>World map (3D)</span>";mb.onclick=openMap;morePop.insertBefore(mb,morePop.firstChild);
-var gb=document.createElement("button");gb.type="button";gb.id="mapBtn";gb.title="World map (3D globe)";gb.setAttribute("aria-label","World map");gb.innerHTML=ICO;gb.onclick=function(e){e.stopPropagation();openMap()};pn.appendChild(gb);
+
 window.__map={open:openMap,data:C};
 })();
 
