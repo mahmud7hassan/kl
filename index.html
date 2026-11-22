@@ -1160,13 +1160,11 @@ document.addEventListener("click",function(e){if(!colorPop.contains(e.target))co
 document.addEventListener("keydown",function(e){if(e.key==="Escape")colorPop.style.display="none"});
 /* canvas-এ pointerdown এ preventDefault হয় বলে click আসে না; তাই pointerdown এ popup বন্ধ করা হচ্ছে */
 document.addEventListener("pointerdown",function(e){var t=e.target;if(!colorPop.contains(t)&&!$("colorBtn").contains(t))colorPop.style.display="none";if(!pop.contains(t)&&!$("shapeBtn").contains(t))pop.style.display="none"},true);
-/* লেখা/আঁকার সময় color ও size control লুকানো; লেখা শেষ হলে ১.৫ সেকেন্ড পর আবার দেখা যাবে */
-(function(){var wt=null,B=document.body;
-  function show(){clearTimeout(wt);B.classList.remove("writing")}
-  document.addEventListener("pointerdown",function(e){if(e.target.tagName==="CANVAS"){clearTimeout(wt);B.classList.add("writing")}else if(e.target.closest&&e.target.closest(".bar"))show()},true);
-  function end(){clearTimeout(wt);wt=setTimeout(function(){B.classList.remove("writing")},1500)}
-  document.addEventListener("pointerup",end,true);document.addEventListener("pointercancel",end,true);
-  var bar=document.querySelector(".bar");if(bar)bar.addEventListener("pointermove",show);
+/* লেখা/আঁকার সময় pen panel লুকানো থাকে; নিজে থেকে আর ফিরে আসে না — toolbar-এ tap করলে তবেই দেখা যাবে */
+(function(){var B=document.body;
+  document.addEventListener("pointerdown",function(e){
+    if(e.target.tagName==="CANVAS"){B.classList.add("writing")}
+    else if(e.target.closest&&e.target.closest(".bar")){if(B.classList.contains("writing"))B.dataset.rv=String(Date.now());B.classList.remove("writing")}},true);
 })();
 
 /* ---------- theme ---------- */
@@ -1414,6 +1412,7 @@ dt.insertBefore(body,dt.firstChild);dt.insertBefore(head,dt.firstChild);
 xb.onclick=function(e){e.stopPropagation();dt.classList.add("pp-min")};
 document.querySelectorAll("[data-tool]").forEach(function(b){b.addEventListener("click",function(e){
   var t=b.dataset.tool;
+  if(t===tool&&Date.now()-(+document.body.dataset.rv||0)<800){document.body.dataset.rv="";dt.classList.remove("pp-min");e.stopImmediatePropagation();e.preventDefault();return}
   if(t===tool&&(t==="pen"||t==="hl")){dt.classList.toggle("pp-min");e.stopImmediatePropagation();e.preventDefault();return}
   if(t===tool&&dt.classList.contains("pp-min")){dt.classList.remove("pp-min");e.stopImmediatePropagation();e.preventDefault()}},true)});
 $("size").addEventListener("input",ppPrev);
