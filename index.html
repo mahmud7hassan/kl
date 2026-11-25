@@ -2426,6 +2426,443 @@ var mb=document.createElement("button");mb.type="button";mb.id="mapBtnMenu";mb.i
 window.__map={open:openMap,data:C};
 })();
 
+/* ---------- 3D measuring instruments: 15 cm ruler · vernier calipers · screw gauge ---------- */
+(function(){
+var CDN=["https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js","https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"],
+T,rd,sc,cam,host,bgc="#004054",booting=false,ready=false,act="ruler",raf=0,txt=[],real=false,PXCM=37.8,V={az:0,el:0,d:30,t:[0,0,0]},INS={};
+try{PXCM=+localStorage.getItem("insPxCm")||37.8}catch(e){}
+var st=document.createElement("style");
+st.textContent=`#insOv{position:fixed;inset:0;z-index:40;background:#0a0d12;color:#e8eaee;display:none;flex-direction:column}
+#insOv.on{display:flex}
+#insOv .iTop{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:8px 10px;padding-top:max(8px,env(safe-area-inset-top));background:#12141a;border-bottom:1px solid #2c2f37}
+#insOv h3{margin:0 6px 0 0;font-size:15px}
+#insOv button,#insOv select{background:#262932;color:#e8eaee;border:1px solid #343843;border-radius:10px;min-height:36px;padding:3px 10px;font-size:13px}
+#insOv button:hover{border-color:#d4ff3a}
+#insOv button.on,#insOv .go{background:#d4ff3a;color:#101114;border-color:#d4ff3a;font-weight:700}
+#iHost{flex:1;position:relative;min-height:0;touch-action:none;cursor:grab;background:radial-gradient(ellipse at 50% 35%,#1d2634,#0a0d12 75%)}
+#iHost canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#iLoad{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;background:rgba(18,20,26,.85);padding:14px 20px;border-radius:12px;display:none;z-index:2}
+#iPan{background:#12141a;border-top:1px solid #2c2f37;padding:8px 10px;padding-bottom:max(8px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow:auto}
+#iRead{font-size:14px;line-height:1.5}#iRead b{color:#d4ff3a}
+#iCtl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px}
+#iCtl input[type=range]{flex:1;min-width:150px;accent-color:#d4ff3a}#iCtl label{display:flex;gap:5px;align-items:center}`;
+document.head.appendChild(st);
+var ov=document.createElement("div");ov.id="insOv";ov.setAttribute("role","dialog");ov.setAttribute("aria-label","Measuring instruments");
+ov.innerHTML=`<div class="iTop"><h3>Instruments · যন্ত্রপাতি</h3><span id="iTabs" style="display:flex;gap:4px;flex-wrap:wrap"><button type="button" data-k="ruler">Ruler 15 cm</button><button type="button" data-k="vern">Vernier calipers</button><button type="button" data-k="screw">Screw gauge</button></span><span style="flex:1"></span><button type="button" id="iHome">Reset view</button><button type="button" id="iIns" class="go">Insert in page</button><button type="button" id="iX" aria-label="Close">✕</button></div><div id="iHost"><div id="iLoad">Loading 3D…</div></div><div id="iPan"><div id="iRead"></div><div id="iCtl"></div></div>`;
+document.body.appendChild(ov);
+/* ---------- helpers ---------- */
+function mat(c,o){return new T.MeshStandardMaterial(Object.assign({color:c,metalness:.3,roughness:.5},o||{}))}
+function bx(w,h,d,m,x,y,z,p){var o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);p&&p.add(o);return o}
+function cx(r,len,m,t0,tl){var o=new T.CylinderGeometry(r,r,len,48,1,t0!==undefined,t0||0,tl||Math.PI*2);o.rotateZ(-Math.PI/2);return new T.Mesh(o,m)}
+function zc(r,len,m){var o=new T.CylinderGeometry(.5,.5,len,40);o.rotateX(Math.PI/2);var q=new T.Mesh(o,m);q.userData.r=r;return q}
+function cvs(w,h,f){var c=document.createElement("canvas");c.width=w;c.height=h;f(c.getContext("2d"),w,h);var t=new T.CanvasTexture(c);t.anisotropy=Math.min(8,rd.capabilities.getMaxAnisotropy());return t}
+function ln(c,a,b,x,y,w){c.lineWidth=w;c.beginPath();c.moveTo(a,b);c.lineTo(x,y);c.stroke()}
+function rotc(c,H){c.setTransform(0,-1,1,0,0,H)}
+function out(h,t){$("iRead").innerHTML=h;txt=t}
+function ctl(h,f){$("iCtl").innerHTML=h;f()}
+function r2(v){return Math.round(v*100)/100}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+/* ---------- camera ---------- */
+function place(){var c=Math.cos(V.el);cam.position.set(V.t[0]+V.d*Math.sin(V.az)*c,V.t[1]+V.d*Math.sin(V.el),V.t[2]+V.d*Math.cos(V.az)*c);cam.lookAt(V.t[0],V.t[1],V.t[2])}
+function view(t,d,az,el){V.t=t;V.d=d;V.az=az||0;V.el=el||0;real=false;place()}
+function fit(w,h){var tn=Math.tan(cam.fov*Math.PI/360);return Math.max(h/2/tn,w/2/(tn*cam.aspect))}
+function realSize(){var tn=Math.tan(cam.fov*Math.PI/360);view([0,.2,0],host.clientHeight/PXCM/(2*tn),0,0);real=true}
+/* ---------- 1) 15 cm ruler (1 mm + 1/16 inch graduations, true proportions) ---------- */
+function Rl(){var g=new T.Group(),K=160,s={a:2,L:6.8,gd:false},
+ tx=cvs(16*K,3*K,function(c,w,h){var q=c.createLinearGradient(0,0,0,h);q.addColorStop(0,"#eef8fc");q.addColorStop(1,"#c6e3ee");c.fillStyle=q;c.fillRect(0,0,w,h);c.fillStyle=c.strokeStyle="#0f2a36";c.textAlign="center";c.font="600 34px Inter,sans-serif";
+  for(var i=0;i<=150;i++){var x=K/2+i*K/10,l=i%10?i%5?.26:.4:.55;ln(c,x,0,x,l*K,i%10?2:3.5);if(!(i%10))c.fillText(i/10,x,l*K+38)}
+  for(i=0;i<=94;i++){x=K/2+i*.15875*K;l=i%16?i%8?i%4?i%2?.14:.2:.3:.4:.55;ln(c,x,h,x,h-l*K,i%16?2:3.5);if(i&&!(i%16))c.fillText(i/16,x,h-l*K-12)}
+  c.font="700 36px Inter,'Noto Sans Bengali',sans-serif";c.fillText("15 cm  ·  স্কেল  ·  6 inch",w/2,h/2+12)}),
+ pm=mat("#cde6f0",{metalness:.05,roughness:.3}),fm=new T.MeshStandardMaterial({map:tx,roughness:.3,metalness:.05}),
+ rl=new T.Mesh(new T.BoxGeometry(16,3,.14),[pm,pm,pm,pm,fm,pm]),
+ bl=bx(1,.9,.5,mat("#d97706",{metalness:.05,roughness:.6}),0,0,0,g),
+ gl=[0,1].map(function(){return bx(.025,4.6,.02,mat("#ef4444"),0,.2,.3,g)});g.add(rl);
+ function upd(){var a=s.a,b=a+s.L,f=function(v){return(Math.round(v*10)/10).toFixed(1)};bl.scale.x=s.L;bl.position.set(a-7.5+s.L/2,1.95,.12);gl[0].position.x=a-7.5;gl[1].position.x=b-7.5;gl[0].visible=gl[1].visible=s.gd;
+  var len=((Math.round(b*10)-Math.round(a*10))/10).toFixed(1);
+  out("<b>Ruler · স্কেল</b> — 15 cm, least count 1 mm = 0.1 cm<br>Left end <b>"+f(a)+" cm</b> · Right end <b>"+f(b)+" cm</b><br>Length = "+f(b)+" − "+f(a)+" = <b>"+len+" cm</b>",["15 cm Ruler (least count 1 mm)","Left end: "+f(a)+" cm    Right end: "+f(b)+" cm","Length = "+len+" cm"])}
+ function ui(){ctl(`<button type="button" id="iNew">New object</button><button type="button" id="iReal">Real size 1:1</button><label><input id="iGd" type="checkbox"> Guide lines</label><label style="flex:1;min-width:200px">1 cm = <b id="iPx"></b> px <input id="iCal" type="range" min="20" max="90" step=".1"></label><small style="flex-basis:100%;opacity:.7">Real size: hold a real ruler against the screen and move the slider until the cm marks match. Drag the block to measure it; drag the background to rotate.</small>`,function(){
+  $("iNew").onclick=function(){s.L=Math.round((3+Math.random()*9)*10)/10;s.a=Math.round(Math.random()*(15-s.L)*10)/10;upd()};
+  $("iReal").onclick=realSize;$("iGd").checked=s.gd;$("iGd").onchange=function(){s.gd=this.checked;upd()};
+  var cl=$("iCal");cl.value=PXCM;$("iPx").textContent=PXCM.toFixed(1);
+  cl.oninput=function(){PXCM=+this.value;$("iPx").textContent=PXCM.toFixed(1);try{localStorage.setItem("insPxCm",PXCM)}catch(e){}if(real)realSize()}})}
+ return{g:g,drag:[bl],val:function(){return s.a},set:function(v){s.a=clamp(v,-.4,15.4-s.L);upd()},mul:1,ui:ui,upd:upd,view:function(){view([0,.8,0],fit(17,6.5)+1,-.12,.3)}}}
+/* ---------- 2) vernier calipers: 2D simulator (ported from the reference simulation) ---------- */
+function Vn(){var g=new T.Group(),cv=document.createElement("canvas"),c2=cv.getContext("2d"),dpr=1,
+ ZX=79,BY=162,RW=915,MS=600,BE=RW-ZX,TIPY=21,HH=336,MID=135,
+ S={M:50,N:10,z:0,a:0,b:0,vd:false,dv:false,sc:1,xo:0,yo:0},p=null,P={},dm=0,acc=0,pd=0,pmx=0,pmy=0,lx=0,ly=0;
+ cv.id="iVc";cv.style.display="none";cv.style.touchAction="none";host.appendChild(cv);
+ function md(a,n){return((a%n)+n)%n}
+ function mp(){return MS/S.M}
+ function vp(){return mp()*(1-1/S.N)}
+ function sh(){return(S.a+S.b/S.N)*mp()}
+ function PR(){return Math.max(128,vp()*S.N+20)}
+ function raw(){return(S.a+S.b/S.N)*.1}
+ function zer(){return S.z/S.N*.1}
+ function msrO(){return Math.floor((S.a*S.N+S.b+S.z)/S.N)}
+ function vsrO(){return md(S.b+S.z,S.N)}
+ function dec(){return Math.max(2,Math.ceil(-Math.log10(.1/S.N)-1e-9))}
+ function fm(v){return v.toFixed(dec())+" cm"}
+ /* ---- drawing helpers (coordinates relative to the main-scale zero tick; world = rel + [79,162]) ---- */
+ function Q(a,f,dx){c2.beginPath();a.forEach(function(q,i){var X=q[0]+ZX+(dx||0),Y=q[1]+BY;i?c2.lineTo(X,Y):c2.moveTo(X,Y)});c2.closePath();c2.fillStyle=f;c2.fill();c2.lineWidth=1.5;c2.lineJoin="round";c2.strokeStyle="#000";c2.stroke()}
+ function R(x0,y0,x1,y1){return[[x0,y0],[x1,y0],[x1,y1],[x0,y1]]}
+ function L(x1,y1,x2,y2){c2.beginPath();c2.moveTo(x1,y1);c2.lineTo(x2,y2);c2.stroke()}
+ function T2(s,x,y,al){c2.textAlign=al||"center";c2.fillText(s,x,y)}
+ function arrows(x0,y0,x1,y1,aw,al,as,ae){var dx=x1-x0,dy=y1-y0,an=Math.atan2(dy,dx),le=Math.sqrt(dx*dx+dy*dy);c2.save();c2.translate(x0,y0);c2.rotate(an);c2.beginPath();c2.moveTo(0,0);c2.lineTo(le,0);
+  if(as){c2.moveTo(al,-aw);c2.lineTo(0,0);c2.lineTo(al,aw)}if(ae){c2.moveTo(le-al,-aw);c2.lineTo(le,0);c2.lineTo(le-al,aw)}c2.stroke();c2.restore()}
+ var UP=[[-77,-48.6],[-77,-67.8],[-73.8,-73.8],[-45.8,-74.5],[-45.8,-141],[-31.2,-122.8],[-16.5,-67.8],[-16.5,-55],[-1.4,-55],[-1.4,-48.6]];
+ function upperJaw(){Q(UP,"#c8c8c8");Q(R(-44.9,-122.8,-31.2,-81.5),"#dfeaec")}
+ function beam(){
+  Q(R(-77,-48.6,BE,0),"#dbe8ea");Q(R(-77,-56.3,BE,-48.6),"#cfcfcf");Q(R(-11.9,0,BE,7.8),"#cfcfcf");
+  upperJaw();
+  Q([[-77,0],[-77,28.4],[-44.9,142.9],[-31.2,154.4],[-11.9,172.7],[-11.9,0]],"#c8c8c8");
+  Q([[-37,129.2],[-11.9,129.2],[-11.9,159],[-26.3,159]],"#dfeaec")}
+ function slider(shv){var PW=PR();
+  Q([[-46,-141],[-46,-74.7],[-6.9,-74.7],[-6.9,-56.3],[-77,-56.3],[-77,-67.8],[-61.8,-122.8]],"#c8c8c8",shv);
+  Q([[-6.9,20.2],[55,20.2],[55,47.6],[-11.9,47.6],[-11.9,27],[-6.9,27]],"#8a8a8a",shv);
+  Q([[-11.9,47.6],[55,47.6],[23.8,140.6],[18.3,147.5],[-11.9,172.7]],"#c8c8c8",shv);
+  Q([[-11.9,129.2],[9.2,129.2],[6,157],[-11.9,157]],"#dfeaec",shv);
+  Q(R(-6.9,-75.6,PW,-67.8),"#8a8a8a",shv);Q(R(-6.9,-67.8,PW,-48.6),"#d9d9d9",shv);
+  Q(R(37.6,-83.8,45.8,-75.6),"#c8c8c8",shv);Q(R(25.2,-98.9,58.2,-83.8),"#cfcfcf",shv);
+  c2.lineWidth=1;c2.strokeStyle="#555";for(var k=27;k<58;k+=2){L(ZX+shv+k,BY-98,ZX+shv+k,BY-84.5)}
+  Q(R(-6.9,-2,PW,20.2),"#d9d9d9",shv);Q(R(-6.9,20.2,PW,27),"#8a8a8a",shv)}
+ function paint(){
+  var W=cv.width,Hh=cv.height;c2.setTransform(1,0,0,1,0,0);c2.clearRect(0,0,W,Hh);if(!W||!Hh)return;
+  var k=dpr*S.sc;c2.setTransform(k,0,0,k,k*S.xo,k*S.yo);
+  var N=S.N,m=mp(),v=vp(),shv=sh(),i,x,tl,lg;c2.lineJoin="round";c2.lineCap="butt";
+  /* blade (hidden inside the beam, comes out at the right end) */
+  Q(R(BE-716+shv,-38.5,BE+shv,-18.5),"#c8c8c8");c2.lineWidth=1;c2.strokeStyle="#888";L(ZX+BE-716+shv,BY-28.5,ZX+BE+shv,BY-28.5);
+  beam();
+  /* main scale */
+  c2.save();c2.translate(ZX,BY);c2.strokeStyle=c2.fillStyle="#000";c2.lineWidth=1.5;c2.font="13px sans-serif";
+  lg=0;while(m*lg<50)lg+=5;x=-m*S.z/N;
+  for(i=0;i<=S.M;i++){tl=i%5==0?22:13;L(x,0,x,-tl);if(i%lg==0)T2(String(Math.round(i)/10),x,-tl-3);x+=m}
+  if(S.vd){c2.lineWidth=.5;var dx=m/N;x=-m*S.z/N+msrO()*m;for(i=0;i<=N;i++){L(x,0,x,-10);x+=dx}c2.lineWidth=1.5}
+  c2.textAlign="left";c2.fillText("1 MSD = 0.1 cm",BE-130,-33);
+  c2.restore();
+  /* slider */
+  slider(shv);
+  c2.save();c2.translate(ZX,BY);c2.strokeStyle=c2.fillStyle="#000";c2.lineWidth=1.5;c2.font="10.7px sans-serif";
+  lg=0;while(v*lg<20)lg++;x=shv;
+  for(i=0;i<=N;i++){tl=8;if(i%lg==0){tl=10;T2(String(i),x,-2+tl+1+10)}L(x,-2,x,-2+tl);x+=v}
+  c2.restore();
+  /* redraw fixed upper jaw above the slider's upper jaw */
+  c2.save();c2.beginPath();c2.rect(0,0,64,102);c2.clip();upperJaw();c2.restore();
+  /* object */
+  if(p&&p.state>0){c2.save();c2.fillStyle="rgb(130,190,140)";c2.strokeStyle="#000";c2.lineWidth=1.5;c2.translate(p.x,p.y);c2.rotate(p.th);c2.fill(p.path);c2.stroke(p.path);c2.restore()}
+  if(S.dv)info();
+  c2.setTransform(1,0,0,1,0,0)}
+ function info(){var m=mp(),N=S.N,fg="orange",ms=msrO(),vs=vsrO(),gp=m*(S.a+S.b/N),ar=5,x,y;
+  c2.fillStyle=c2.strokeStyle=fg;c2.lineWidth=1.5;c2.font="13px sans-serif";
+  x=ZX-m*S.z/N+ms*m;y=BY-22;arrows(x,y,x,y-80,ar,ar,true,false);T2(ms+"MSD = "+fm(ms*.1),x,y-83+10);
+  x=ZX+gp+vs*vp();y=BY+22;arrows(x,y,x,y+20,ar,ar,true,false);T2(vs+"VSD = "+fm(.1*vs/N),x,y+22+10);
+  var mr=raw()+zer(),cr=raw(),ze=zer(),xs=[67,33,RW],ys=[HH+5,4,BY-70];
+  for(var i=0;i<3;i++){x=xs[i];y=ys[i];L(x,y-8,x,y+8);arrows(x-30,y,x,y,ar,ar,false,true);x+=gp;L(x,y-8,x,y+8);arrows(x,y,x+30,y,ar,ar,true,false);x-=gp/2;y+=20;
+   T2(S.z==0?fm(cr):S.z>0?fm(mr)+" - "+fm(ze)+" = "+fm(cr):fm(mr)+" + "+fm(-ze)+" = "+fm(cr),x,y+5)}}
+ /* ---- logic ---- */
+ function tr(d){S.b+=d;while(S.b<0){S.b+=S.N;S.a--}while(S.b>=S.N){S.b-=S.N;S.a++}
+  if(raw()<=0){S.a=0;S.b=0}if(raw()>=S.M*.1){S.a=S.M;S.b=0}update()}
+ function nmax(){return Math.max(5,Math.min(25,Math.floor(S.M/3/5)*5))}
+ function update(){var N,m,t,n;
+  S.N=Math.min(S.N,nmax());N=S.N;if(S.a>S.M){S.a=S.M;S.b=0}if(S.b>=N)S.b=N-1;S.z=clamp(S.z,-(N-1),N-1);m=mp();
+  if(p&&p.state==2){var vv=(S.a+S.b/N)*m,ol=p.length;
+   if((p.mode==0&&vv<ol-1e-9)||(p.mode!=0&&vv>ol+1e-9)){t=ol/m*N;n=p.mode==0?Math.ceil(t-1e-9):Math.floor(t+1e-9);S.a=Math.floor(n/N);S.b=n-S.a*N}}
+  var q=function(i){return $(i)};
+  if(q("gM")){q("gM").value=S.M;q("oM").textContent=S.M;q("gN").max=nmax();q("gN").value=N;q("oN").textContent=N;q("gZ").min=-(N-1);q("gZ").max=N-1;q("gZ").value=S.z;q("oZ").textContent=S.z;q("gS").value=S.sc;q("oS").textContent=S.sc.toFixed(1)}
+  var x=$("iS");if(x){x.max=S.M*N;x.step=1;x.value=S.a*N+S.b}
+  readout();paint()}
+ function readout(){var N=S.N,lc=.1/N,d=dec(),ms=msrO(),vs=vsrO(),ob=raw()+zer(),ze=zer(),cor=raw(),ae=Math.abs(ze).toFixed(d),hint="";
+  if(p&&p.state>0){var nm=p.mode==0?"external jaws":p.mode==1?"internal jaws":"depth blade";
+   hint="<br><i>"+(p.state==2?"Object snapped — move the vernier until the "+nm+" touch it.":"Drag the object near the external jaws, internal jaws or depth blade to snap it.")+"</i>"}
+  var zt=S.z?"<br>Zero error = "+(S.z>0?"+":"−")+ae+" cm → corrected = "+ob.toFixed(d)+(S.z>0?" − ":" + ")+ae+" = <b>"+cor.toFixed(d)+" cm</b>":"";
+  $("iRead").style.display=S.dv?"":"none";
+  out("<b>Vernier calipers · ভার্নিয়ার ক্যালিপার্স</b> — 1 MSD = 0.1 cm, "+N+" VSD = "+(N-1)+" MSD, LC = 0.1/"+N+" = "+lc.toFixed(d)+" cm<br>MSR = <b>"+(ms/10).toFixed(1)+" cm</b> · coinciding VSD = <b>"+vs+"</b> → VSR = "+vs+" × "+lc.toFixed(d)+" = "+(vs*lc).toFixed(d)+" cm<br>Reading = "+(ms/10).toFixed(1)+" + "+(vs*lc).toFixed(d)+" = <b>"+ob.toFixed(d)+" cm</b>"+zt+hint,
+   S.dv?["Vernier calipers (1 MSD = 0.1 cm, LC = "+lc.toFixed(d)+" cm)","MSR = "+(ms/10).toFixed(1)+" cm    VSR = "+vs+" x "+lc.toFixed(d)+" = "+(vs*lc).toFixed(d)+" cm","Reading = "+ob.toFixed(d)+" cm"+(S.z?"    Zero error "+(S.z>0?"+":"-")+ae+"    Corrected = "+cor.toFixed(d)+" cm":"")]:[])}
+ /* ---- problem (object to measure) ---- */
+ function snapTo(mode){var o=p;o.th=0;o.state=2;o.mode=mode;
+  if(mode==1){o.w=2*o.R2;o.h=o.h2;o.x=32-o.R2+o.R1;o.y=TIPY-o.h2+o.h1;o.length=2*o.R1}
+  else if(mode==0){o.w=2*o.R2;o.h=o.h2;o.x=67;o.y=HH-50-o.h/2;o.length=2*o.R2}
+  else{o.th=Math.PI/2;o.w=-o.h2;o.h=o.R2*2;o.x=RW-o.w;o.y=MID-o.R2;o.length=o.h1}}
+ function mkPath(o){var r=new Path2D();r.moveTo(0,0);r.lineTo(2*o.R2,0);r.lineTo(2*o.R2,o.h2);r.lineTo(o.R1+o.R2,o.h2);r.lineTo(o.R2+o.R1,o.h2-o.h1);r.lineTo(o.R2-o.R1,o.h2-o.h1);r.lineTo(o.R2-o.R1,o.h2);r.lineTo(0,o.h2);r.closePath();o.path=r}
+ function create(){var ch=function(i){return $(i).checked},rr=Math.random;
+  if(ch("rM")){var o=[30,40,50,60,80,100];S.M=o[Math.floor(rr()*o.length)]}
+  if(ch("rV")){S.N=5*(1+Math.floor(rr()*5))}
+  while(S.N>S.M/4&&S.N>5)S.N-=5;
+  if(ch("rZ"))S.z=Math.round(2*S.N*(rr()-.5));
+  S.z=clamp(S.z,-(S.N-1),S.N-1);
+  var old=p,mode=old&&old.state==2?old.mode:0,was=old&&old.state==2;
+  if(ch("rO")||!p){var q={x:0,y:0,state:1,mode:0,th:0};q.R2=(.3+.7*rr())*MS/4;q.R1=(.7+.2*rr())*q.R2;q.h2=(.4+.6*rr())*MS/5;q.h1=(.7+.2*rr())*q.h2;q.w=2*q.R2;q.h=q.h2;q.length=2*q.R2;mkPath(q);
+   if(old){q.x=old.x;q.y=old.y}p=q}
+  if(was)snapTo(mode);else{p.state=1;p.mode=0;p.th=0;p.w=2*p.R2;p.h=p.h2;p.length=2*p.R2;p.x=-S.xo+16;p.y=Math.max(-S.yo+10,Math.min(HH+40,host.clientHeight/S.sc-S.yo-p.h2-16))}
+  var gb=$("iGb");gb.style.display="none";$("iGh").textContent="Open Controls";
+  tr(0)}
+ function hitS(x,y){var V0=ZX+sh();
+  return(x>V0-8&&x<V0+PR()&&y>BY-100&&y<BY+28)||(x>V0-13&&x<V0+56&&y>BY+27&&y<BY+176)||(x>V0-78&&x<V0-44&&y>BY-142&&y<BY-55)}
+ function hitO(x,y){return p&&p.state>0&&Math.abs(x-p.x-p.w/2)<Math.abs(p.w/2)+6&&Math.abs(y-p.y-Math.abs(p.h/2))<Math.abs(p.h/2)+6}
+ function release(){if(dm==3&&p){var w=Math.abs(p.w),h=Math.abs(p.h),x=p.x+w/2,y=p.y+h/2;
+   if(Math.abs(x-67)<w+20){if(Math.abs(y-30)<h+50)snapTo(1);else if(Math.abs(y-BY-100)<h+50)snapTo(0)}
+   else if(Math.abs(x-RW)<w+20&&Math.abs(y-MID)<h+20)snapTo(2);
+   update()}
+  dm=0}
+ /* ---- view ---- */
+ function rs(){var w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;dpr=Math.min(devicePixelRatio||1,3);cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);paint()}
+ function zoomAt(cx,cy,f){var s2=clamp(S.sc*f,.2,3),wx=cx/S.sc-S.xo,wy=cy/S.sc-S.yo;S.sc=s2;S.xo=cx/s2-wx;S.yo=cy/s2-wy;update()}
+ function view(){var w=host.clientWidth||360,h=host.clientHeight||500;S.sc=clamp(w/400,.6,2.4);S.xo=14/S.sc-2;S.yo=h/(2*S.sc)-178;rs();update()}
+ function wpt(e){var r=cv.getBoundingClientRect();return[(e.clientX-r.left)/S.sc-S.xo,(e.clientY-r.top)/S.sc-S.yo]}
+ function two(){var k=Object.keys(P);return Math.hypot(P[k[0]].x-P[k[1]].x,P[k[0]].y-P[k[1]].y)}
+ function mid(){var k=Object.keys(P),r=cv.getBoundingClientRect();return[(P[k[0]].x+P[k[1]].x)/2-r.left,(P[k[0]].y+P[k[1]].y)/2-r.top]}
+ cv.addEventListener("pointerdown",function(e){cv.setPointerCapture(e.pointerId);P[e.pointerId]={x:e.clientX,y:e.clientY};
+  if(Object.keys(P).length==1){var w=wpt(e);dm=hitS(w[0],w[1])?2:hitO(w[0],w[1])?3:1;if(dm==3)p.state=1;acc=0}
+  else{dm=0;pd=two();var q=mid();pmx=q[0];pmy=q[1]}e.preventDefault()});
+ cv.addEventListener("pointermove",function(e){var o=P[e.pointerId];if(!o)return;var dx=(e.clientX-o.x)/S.sc,dy=(e.clientY-o.y)/S.sc,n=Object.keys(P).length;o.x=e.clientX;o.y=e.clientY;
+  if(n>=2){var d=two(),q=mid();if(pd){var f=d/pd;S.xo+=(q[0]-pmx)/S.sc;S.yo+=(q[1]-pmy)/S.sc;zoomAt(q[0],q[1],f)}pd=d;pmx=q[0];pmy=q[1];return}
+  if(dm==1){S.xo+=dx;S.yo+=dy;paint()}
+  else if(dm==3){p.x+=dx;p.y+=dy;paint()}
+  else if(dm==2){acc+=dx/(mp()/S.N);var k=acc<0?Math.ceil(acc):Math.floor(acc);if(k){acc-=k;tr(k)}}
+  e.preventDefault()});
+ function up(e){delete P[e.pointerId];pd=0;if(!Object.keys(P).length)release()}
+ cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
+ cv.addEventListener("wheel",function(e){e.preventDefault();tr(e.deltaY<0?(e.shiftKey?S.N:1):-(e.shiftKey?S.N:1))},{passive:false});
+ /* ---- control panel (top right) + info ---- */
+ var cs=document.createElement("style");cs.textContent="#iGui{position:absolute;top:8px;right:8px;width:min(260px,66vw);max-height:calc(100% - 16px);overflow:auto;background:rgba(24,36,43,.93);color:#cfe3ea;font:11px ui-monospace,Menlo,Consolas,monospace;border-radius:4px;box-shadow:0 2px 10px #0009;z-index:3}#iGui .r{display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid #2c3f48}#iGui .r{flex-wrap:wrap}#iGui .r span{flex:0 0 86px}#iGui .r label{display:flex;gap:2px;align-items:center;flex:none}#iGui .r input[type=range]{flex:1;min-width:0;accent-color:#9bb;height:14px}#iGui output{flex:0 0 26px;text-align:right;background:#0d171c;padding:2px 3px;border-radius:2px}#iGui button{width:100%;border-radius:0;border:0;border-bottom:1px solid #2c3f48;background:#2f6b4f;color:#fff;font:600 11px ui-monospace,monospace;min-height:30px}#iGh{padding:6px 8px;text-align:center;cursor:pointer;background:#0d171c;border-radius:0 0 4px 4px}#iInf{position:absolute;top:8px;left:8px;z-index:3;width:34px;height:34px;border-radius:50%!important;padding:0!important;background:#fff!important;color:#123!important;font-weight:700}#iHelp{position:absolute;left:8px;top:48px;right:8px;max-width:420px;background:rgba(15,25,30,.95);padding:12px;border-radius:8px;font-size:13px;line-height:1.5;display:none;z-index:3}";document.head.appendChild(cs);
+ var gu=document.createElement("div");gu.id="iGui";
+ gu.innerHTML='<div id="iGb"><button type="button" id="iCr">Create problem</button><div class="r"><span style="flex-basis:100%">Randomise on create</span><label><input id="rZ" type="checkbox" checked>Zero</label><label><input id="rM" type="checkbox" checked>MSD</label><label><input id="rV" type="checkbox" checked>VSD</label><label><input id="rO" type="checkbox" checked>Obj</label></div><div class="r"><span>MSD Count</span><input id="gM" type="range" min="20" max="100" step="10"><output id="oM"></output></div><div class="r"><span>VSD Count</span><input id="gN" type="range" min="5" max="25" step="5"><output id="oN"></output></div><div class="r"><span>Zero Error</span><input id="gZ" type="range" min="-9" max="9" step="1"><output id="oZ"></output></div><div class="r"><span>Virtual Divisions</span><input id="gV" type="checkbox"></div><div class="r"><span>Display values</span><input id="gD" type="checkbox"></div><div class="r"><span>Background</span><input id="gB" type="color"></div><div class="r"><span>Scale</span><input id="gS" type="range" min=".2" max="3" step=".1"><output id="oS"></output></div></div><div id="iGh">Close Controls</div>';
+ host.appendChild(gu);["pointerdown","wheel","touchstart"].forEach(function(t){gu.addEventListener(t,function(e){e.stopPropagation()},{passive:true})});
+ var inf=document.createElement("button");inf.id="iInf";inf.type="button";inf.textContent="i";inf.style.display="none";host.appendChild(inf);
+ var hp=document.createElement("div");hp.id="iHelp";hp.innerHTML="<b>Vernier Simulation</b><br>Customise main scale divisions, vernier scale divisions and zero error using the panel at the top right. Press <i>Create problem</i>, then drag the object near the <i>external jaws</i> (bottom), <i>internal jaws</i> (top) or <i>depth blade</i> (right end) to snap it, then slide the vernier to read its size.<br><br><b>Controls</b><br>Pinch or Page Up/Down to zoom. Mouse wheel, arrow keys or dragging the thimble moves the vernier. Drag the background to pan.";host.appendChild(hp);
+ inf.onclick=function(e){e.stopPropagation();hp.style.display=hp.style.display=="block"?"none":"block"};
+ ["pointerdown","touchstart"].forEach(function(t){inf.addEventListener(t,function(e){e.stopPropagation()},{passive:true});hp.addEventListener(t,function(e){e.stopPropagation()},{passive:true})});
+ $("gB").value=bgc;
+ $("gM").oninput=function(){S.M=+this.value;update()};
+ $("gN").oninput=function(){S.N=+this.value;update()};
+ $("gZ").oninput=function(){S.z=+this.value;update()};
+ $("gV").onchange=function(){S.vd=this.checked;paint()};
+ $("gD").onchange=function(){S.dv=this.checked;update()};
+ $("gB").oninput=function(){bgc=this.value;host.style.background=bgc};
+ $("gS").oninput=function(){var r=cv.getBoundingClientRect();zoomAt(r.width/2,r.height/2,(+this.value)/S.sc)};
+ $("iCr").onclick=create;
+ $("iGh").onclick=function(){var b=$("iGb");b.style.display=b.style.display=="none"?"":"none";this.textContent=b.style.display=="none"?"Open Controls":"Close Controls"};
+ gu.style.display="none";
+ function ui(){ctl('<input id="iS" type="range" min="0" aria-label="Slide the vernier"><button type="button" id="iMm">−1 LC</button><button type="button" id="iPp">+1 LC</button><button type="button" id="iV">Reading close-up</button><button type="button" id="iCl">Remove object</button>',function(){
+  $("iS").oninput=function(){var v=+this.value;S.a=Math.floor(v/S.N);S.b=v-S.a*S.N;update()};
+  $("iMm").onclick=function(){tr(-1)};$("iPp").onclick=function(){tr(1)};
+  $("iV").onclick=function(){var w=host.clientWidth,h=host.clientHeight,s2=clamp(w/190,.6,3);S.sc=s2;S.xo=w/(2*s2)-(ZX+sh()+55);S.yo=h/(2*s2)-(BY-5);update()};
+  $("iCl").onclick=function(){p=null;update()}})}
+ return{g:g,cv:cv,drag:[],ui:ui,upd:update,view:view,rs:rs,zoomBy:function(f){var r=cv.getBoundingClientRect();zoomAt(r.width/2,r.height/2,f)},
+  show:function(b){cv.style.display=b?"block":"none";if(b)rs()},wheel:function(d,m){tr(d*(m>=10?S.N:1))},val:function(){return 0},set:function(){},mul:1}}
+/* ---------- 3) screw gauge (micrometer): 2D simulator (ported from the reference micrometer simulation) ---------- */
+function Sg(){var g=new T.Group(),cv=document.createElement("canvas"),c2=cv.getContext("2d"),dpr=1,
+ OX=539,OY=100,SX=200,SY=79,TX2=40,TX3=440,MSL=200,
+ S={pitch:.5,M:30,C:50,a:0,b:0,z:0,dv:false,sc:1,xo:0,yo:0},p=null,P={},dm=0,acc=0,pd=0,pmx=0,pmy=0,
+ STEEL=[[0,"#58626d"],[.18,"#dfe6eb"],[.45,"#aeb8c1"],[.8,"#7d8893"],[1,"#4a535c"]],
+ CHROME=[[0,"#7c8791"],[.15,"#f2f6f8"],[.4,"#cdd6dc"],[.75,"#98a4ae"],[1,"#6a747e"]];
+ cv.id="iSc";cv.style.display="none";cv.style.touchAction="none";host.appendChild(cv);
+ function md(a,n){return((a%n)+n)%n}
+ function px(){return MSL/S.M}
+ function shift(){return(S.a+S.b/S.C)*px()}
+ function raw(){return(S.a+S.b/S.C)*S.pitch}
+ function zer(){return S.z/S.C*S.pitch}
+ function msrO(){return Math.floor((S.a*S.C+S.b+S.z)/S.C)}
+ function csrO(){return md(S.b+S.z,S.C)}
+ function dec(){return Math.max(2,Math.ceil(-Math.log10(S.pitch/S.C)-1e-9))}
+ function fm(v){return v.toFixed(dec())+" mm"}
+ /* ---- drawing helpers ---- */
+ function cyl(y0,y1,st){var gr=c2.createLinearGradient(0,y0,0,y1);st.forEach(function(s){gr.addColorStop(s[0],s[1])});return gr}
+ function fs(f){c2.fillStyle=f;c2.fill();c2.lineWidth=1.5;c2.strokeStyle="#111c24";c2.stroke()}
+ function poly(a){c2.beginPath();a.forEach(function(q,i){i?c2.lineTo(q[0],q[1]):c2.moveTo(q[0],q[1])});c2.closePath()}
+ function rr(x,y,w,h,r){c2.beginPath();c2.moveTo(x+r,y);c2.lineTo(x+w-r,y);c2.quadraticCurveTo(x+w,y,x+w,y+r);c2.lineTo(x+w,y+h-r);c2.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c2.lineTo(x+r,y+h);c2.quadraticCurveTo(x,y+h,x,y+h-r);c2.lineTo(x,y+r);c2.quadraticCurveTo(x,y,x+r,y);c2.closePath()}
+ function L(x1,y1,x2,y2){c2.beginPath();c2.moveTo(x1,y1);c2.lineTo(x2,y2);c2.stroke()}
+ function T2(s,x,y,al){c2.textAlign=al||"center";c2.fillText(s,x,y)}
+ function arrows(x0,y0,x1,y1,aw,al,as,ae){var dx=x1-x0,dy=y1-y0,an=Math.atan2(dy,dx),le=Math.sqrt(dx*dx+dy*dy);c2.save();c2.translate(x0,y0);c2.rotate(an);c2.beginPath();c2.moveTo(0,0);c2.lineTo(le,0);
+  if(as){c2.moveTo(al,-aw);c2.lineTo(0,0);c2.lineTo(al,aw)}if(ae){c2.moveTo(le-al,-aw);c2.lineTo(le,0);c2.lineTo(le-al,aw)}c2.stroke();c2.restore()}
+ function paint(){
+  var W=cv.width,Hh=cv.height;c2.setTransform(1,0,0,1,0,0);c2.clearRect(0,0,W,Hh);if(!W||!Hh)return;
+  var k=dpr*S.sc;c2.setTransform(k,0,0,k,k*S.xo,k*S.yo);c2.lineJoin="round";c2.lineCap="butt";
+  var C=S.C,m=px(),sh=shift(),X0=OX+sh,i,x,tl;
+  /* spindle (behind the frame; its end hides inside the sleeve) */
+  c2.beginPath();c2.rect(SX+sh,SY,360,42);fs(cyl(SY,SY+42,STEEL));c2.lineWidth=1;c2.strokeStyle="#333";L(SX+sh+4,SY+1,SX+sh+4,SY+41);
+  /* C-frame + anvil */
+  poly([[100,66],[165,66],[165,190],[400,190],[400,140],[462,140],[462,240],[100,240]]);fs(cyl(66,240,[[0,"#5a6f82"],[.5,"#34495c"],[1,"#22313e"]]));
+  c2.fillStyle="rgba(255,255,255,.6)";c2.font="600 15px sans-serif";T2("SCREW GAUGE · স্ক্রু গজ",281,221);
+  rr(165,80,35,40,6);fs(cyl(80,120,STEEL));
+  /* sleeve (barrel) with datum line */
+  rr(400,60,370,80,5);fs(cyl(60,140,CHROME));c2.strokeStyle="#0b1a22";c2.lineWidth=1.5;L(400,100,770,100);c2.lineWidth=1;L(412,60,412,140);
+  /* main (pitch) scale */
+  c2.save();c2.translate(OX,OY);c2.strokeStyle=c2.fillStyle="#000";c2.lineWidth=1.5;c2.font="12pt sans-serif";
+  var low=S.M>20;x=-m*S.z/C;
+  for(i=0;i<=S.M;i++){tl=i%5==0?20:10;if(low&&i%2==1)tl=-10;L(x,0,x,-tl);if(i%10==0)T2(String(+(i*S.pitch).toFixed(3)),x,-tl-3);x+=m}
+  c2.restore();
+  /* thimble */
+  c2.save();c2.translate(X0,0);
+  poly([[0,OY-51],[40,OY-60],[70,OY-60],[89,OY-69],[89,OY+69],[70,OY+60],[40,OY+60],[0,OY+51]]);fs(cyl(OY-69,OY+69,CHROME));
+  c2.beginPath();c2.rect(89,OY-69,247,138);fs(cyl(OY-69,OY+69,STEEL));
+  var rot=(S.a*C+S.b)*2*Math.PI/C,ph,cc,yy;c2.lineWidth=1.2;
+  for(i=0;i<72;i++){ph=i*Math.PI/36+rot;cc=Math.cos(ph);if(cc<=.05)continue;yy=OY+69*Math.sin(ph);c2.strokeStyle="rgba(15,25,35,"+(.5*cc).toFixed(2)+")";L(89,yy,336,yy)}
+  c2.beginPath();c2.rect(89,OY-69,247,138);c2.lineWidth=1.5;c2.strokeStyle="#111c24";c2.stroke();
+  poly([[336,OY-69],[350,OY-58],[372,OY-58],[372,OY+58],[350,OY+58],[336,OY+69]]);fs(cyl(OY-69,OY+69,CHROME));
+  rr(372,OY-62,68,124,14);fs(cyl(OY-62,OY+62,STEEL));c2.lineWidth=1;c2.strokeStyle="rgba(15,25,35,.35)";for(i=0;i<8;i++)L(384+i*7,OY-52,384+i*7,OY+52);
+  /* circular (head) scale on the bevelled edge */
+  var R=51,N=C/4,dth=Math.PI/2/N,cr=csrO(),sn,dy1,dy2,dp,len;
+  c2.strokeStyle=c2.fillStyle="#000";c2.lineWidth=1.5;c2.font="10pt sans-serif";L(0,OY-52,0,OY+52);
+  for(i=0;i<N;i++){sn=Math.sin(i*dth);c2.globalAlpha=sn>.7?Math.max(0,1-3*(sn-.7)):1;
+   dy1=R*sn;dy2=dy1*(R+4)/R;dp=md(cr+i,C);len=18;
+   if(dp%5==0){len=30;dy2=dy1*(R+8)/R;if(i<N-2)T2(String(dp),47,OY-dy2+5,"left")}
+   L(0,OY-dy1,len,OY-dy2);
+   if(i==0)continue;
+   dy2=dy1*(R+4)/R;dp=md(cr-i,C);len=18;
+   if(dp%5==0){len=30;dy2=dy1*(R+8)/R;if(i<N-2)T2(String(dp),47,OY+dy2+5,"left")}
+   L(0,OY+dy1,len,OY+dy2)}
+  c2.globalAlpha=1;c2.restore();
+  /* object */
+  if(p&&p.state>0){var gr=c2.createLinearGradient(p.x,0,p.x+p.w,0);gr.addColorStop(0,"rgb(120,120,120)");gr.addColorStop(.5,"rgb(220,230,210)");gr.addColorStop(1,"rgb(120,120,120)");
+   c2.fillStyle=gr;c2.fillRect(p.x,p.y,p.w,p.h);c2.strokeStyle="#000";c2.lineWidth=1.5;c2.strokeRect(p.x,p.y,p.w,p.h)}
+  if(S.dv)info();
+  c2.setTransform(1,0,0,1,0,0)}
+ function info(){var m=px(),C=S.C,fg="orange",ar=5,gp=m*(S.a+S.b/C),ms=msrO(),cs=csrO(),x,y,t,w;
+  c2.fillStyle=c2.strokeStyle=fg;c2.lineWidth=1.5;c2.font="13px sans-serif";
+  x=OX-m*S.z/C+ms*m;y=OY+12;arrows(x,y,x,y+50,ar,ar,true,false);T2(ms+" MSD = "+fm(ms*S.pitch),x,y+65);
+  x=OX+gp+TX2;y=OY;arrows(x,y,x+40,y,ar,ar,true,false);t=cs+" CSD = "+fm(S.pitch*cs/C);w=c2.measureText(t).width;
+  c2.fillStyle="rgba(0,0,0,.7)";c2.fillRect(x+44,y-10,w+8,20);c2.fillStyle=fg;T2(t,x+48,y+5,"left");
+  y=SY-20;arrows(SX-31,y,SX-1,y,ar,ar,false,true);arrows(SX+gp+3,y,SX+gp+33,y,ar,ar,true,false);
+  var mr=raw()+zer(),cr=raw(),ze=zer();
+  t=S.z==0?fm(cr):S.z>0?fm(mr)+" - "+fm(ze)+" = "+fm(cr):fm(mr)+" + "+fm(-ze)+" = "+fm(cr);
+  T2(t,SX+gp/2,SY-42+5)}
+ /* ---- logic ---- */
+ function tr(d){S.b+=d;while(S.b<0){S.b+=S.C;S.a--}while(S.b>=S.C){S.b-=S.C;S.a++}
+  if(raw()<=0){S.a=0;S.b=0}if(raw()>=S.M*S.pitch){S.a=S.M;S.b=0}update()}
+ function update(){var C,m,n;
+  S.C=clamp(S.C,25,100);C=S.C;S.z=clamp(S.z,-(C-1),C-1);if(S.b>=C)S.b=C-1;if(S.a>S.M){S.a=S.M;S.b=0}
+  m=px();
+  if(p&&p.state==2){var vv=(S.a+S.b/C)*m;if(vv<p.w-1e-9){n=Math.ceil(p.w/m*C-1e-9);S.a=Math.floor(n/C);S.b=n-S.a*C}}
+  var q=function(i){return $(i)};
+  if(q("sM")){q("sM").value=S.M;q("xM").textContent=S.M;q("sC").value=C;q("xC").textContent=C;q("sZ").min=-(C-1);q("sZ").max=C-1;q("sZ").value=S.z;q("xZ").textContent=S.z;q("sP").value=S.pitch;q("sS").value=S.sc;q("xS").textContent=S.sc.toFixed(1)}
+  var x=$("iS");if(x){x.max=S.M*C;x.step=1;x.value=S.a*C+S.b}
+  readout();paint()}
+ function readout(){var C=S.C,lc=S.pitch/C,d=dec(),ms=msrO(),cs=csrO(),ob=raw()+zer(),ze=zer(),cor=raw(),ae=Math.abs(ze).toFixed(d),hint="",f=function(v){return String(+v.toFixed(d))},
+  psr=f(ms*S.pitch),hsr=(cs*lc).toFixed(d);
+  if(p&&p.state>0)hint="<br><i>"+(p.state==2?"Object is held between the anvil and the spindle — turn the thimble until it just grips it.":"Drag the object between the anvil and the spindle to snap it in.")+"</i>";
+  var zt=S.z?"<br>Zero error = "+(S.z>0?"+":"−")+ae+" mm → corrected = "+ob.toFixed(d)+(S.z>0?" − ":" + ")+ae+" = <b>"+cor.toFixed(d)+" mm</b>":"";
+  $("iRead").style.display=S.dv?"":"none";
+  out("<b>Screw gauge · স্ক্রু গজ</b> — pitch "+S.pitch+" mm, "+C+" divisions, LC = "+S.pitch+"/"+C+" = "+lc.toFixed(d)+" mm<br>PSR = <b>"+psr+" mm</b> · HSR = <b>"+cs+"</b> div → "+cs+" × "+lc.toFixed(d)+" = "+hsr+" mm<br>Reading = "+psr+" + "+hsr+" = <b>"+ob.toFixed(d)+" mm</b>"+zt+hint,
+   S.dv?["Screw gauge (pitch "+S.pitch+" mm, LC "+lc.toFixed(d)+" mm)","PSR = "+psr+" mm    HSR = "+cs+" x "+lc.toFixed(d)+" = "+hsr+" mm","Reading = "+ob.toFixed(d)+" mm"+(S.z?"    Zero error "+(S.z>0?"+":"-")+ae+"    Corrected = "+cor.toFixed(d)+" mm":"")]:[])}
+ /* ---- problem (object to measure) ---- */
+ function snap(){p.state=2;p.x=SX;p.y=OY-p.h/2}
+ function create(){var ch=function(i){return $(i).checked},rr2=Math.random;
+  if(ch("sRC"))S.C=(1+Math.round(rr2()*3))*25;
+  if(ch("sRM"))S.M=10*(1+Math.round(4*rr2()));
+  if(ch("sRZ"))S.z=Math.round(2*S.C*(rr2()-.5));
+  S.z=clamp(S.z,-(S.C-1),S.C-1);
+  var w=(ch("sRO")||!p)?MSL*(1+5*rr2())/10:p.w;
+  p={x:SX,y:OY-50,w:w,h:100,state:2};
+  $("sGb").style.display="none";$("sGh").textContent="Open Controls";
+  tr(0)}
+ function hitS(x,y){var X0=OX+shift();return x>X0+TX2&&x<X0+TX3&&y>OY-69&&y<OY+69}
+ function hitO(x,y){return p&&p.state>0&&x>p.x&&x<p.x+p.w&&y>p.y&&y<p.y+p.h}
+ function release(){if(dm==3&&p){if(Math.abs(p.x-SX)<200&&Math.abs(p.y-OY+p.h/2)<p.h/2+50)snap();update()}dm=0}
+ /* ---- view ---- */
+ function rs(){var w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;dpr=Math.min(devicePixelRatio||1,3);cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);paint()}
+ function zoomAt(cx,cy,f){var s2=clamp(S.sc*f,.2,3),wx=cx/S.sc-S.xo,wy=cy/S.sc-S.yo;S.sc=s2;S.xo=cx/s2-wx;S.yo=cy/s2-wy;update()}
+ function view(){var w=host.clientWidth||360,h=host.clientHeight||500;S.sc=clamp(w/760,.3,1.6);S.xo=10/S.sc-96;S.yo=h/(2*S.sc)-135;rs();update()}
+ function wpt(e){var r=cv.getBoundingClientRect();return[(e.clientX-r.left)/S.sc-S.xo,(e.clientY-r.top)/S.sc-S.yo]}
+ function two(){var k=Object.keys(P);return Math.hypot(P[k[0]].x-P[k[1]].x,P[k[0]].y-P[k[1]].y)}
+ function mid(){var k=Object.keys(P),r=cv.getBoundingClientRect();return[(P[k[0]].x+P[k[1]].x)/2-r.left,(P[k[0]].y+P[k[1]].y)/2-r.top]}
+ cv.addEventListener("pointerdown",function(e){cv.setPointerCapture(e.pointerId);P[e.pointerId]={x:e.clientX,y:e.clientY};
+  if(Object.keys(P).length==1){var w=wpt(e);dm=hitS(w[0],w[1])?2:hitO(w[0],w[1])?3:1;if(dm==3)p.state=1;acc=0}
+  else{dm=0;pd=two();var q=mid();pmx=q[0];pmy=q[1]}e.preventDefault()});
+ cv.addEventListener("pointermove",function(e){var o=P[e.pointerId];if(!o)return;var dx=(e.clientX-o.x)/S.sc,dy=(e.clientY-o.y)/S.sc,n=Object.keys(P).length;o.x=e.clientX;o.y=e.clientY;
+  if(n>=2){var d=two(),q=mid();if(pd){var f=d/pd;S.xo+=(q[0]-pmx)/S.sc;S.yo+=(q[1]-pmy)/S.sc;zoomAt(q[0],q[1],f)}pd=d;pmx=q[0];pmy=q[1];return}
+  if(dm==1){S.xo+=dx;S.yo+=dy;paint()}
+  else if(dm==3){p.x+=dx;p.y+=dy;paint()}
+  else if(dm==2){acc+=dy/(2*Math.PI*51/S.C);var k=acc<0?Math.ceil(acc):Math.floor(acc);if(k){acc-=k;tr(k)}}
+  e.preventDefault()});
+ function up(e){delete P[e.pointerId];pd=0;if(!Object.keys(P).length)release()}
+ cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
+ cv.addEventListener("wheel",function(e){e.preventDefault();tr(e.deltaY<0?(e.shiftKey?S.C:1):-(e.shiftKey?S.C:1))},{passive:false});
+ /* ---- control panel (top right) + info ---- */
+ var cs=document.createElement("style");cs.textContent="#sGui{position:absolute;top:8px;right:8px;width:min(260px,66vw);max-height:calc(100% - 16px);overflow:auto;background:rgba(24,36,43,.93);color:#cfe3ea;font:11px ui-monospace,Menlo,Consolas,monospace;border-radius:4px;box-shadow:0 2px 10px #0009;z-index:3}#sGui .r{display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid #2c3f48;flex-wrap:wrap}#sGui .r span{flex:0 0 86px}#sGui .r label{display:flex;gap:2px;align-items:center;flex:none}#sGui .r input[type=range]{flex:1;min-width:0;accent-color:#9bb;height:14px}#sGui .r select{flex:1;min-width:0;min-height:26px;padding:0 4px;font-size:11px}#sGui output{flex:0 0 26px;text-align:right;background:#0d171c;padding:2px 3px;border-radius:2px}#sGui button{width:100%;border-radius:0;border:0;border-bottom:1px solid #2c3f48;background:#2f6b4f;color:#fff;font:600 11px ui-monospace,monospace;min-height:30px}#sGh{padding:6px 8px;text-align:center;cursor:pointer;background:#0d171c;border-radius:0 0 4px 4px}#sInf{position:absolute;top:8px;left:8px;z-index:3;width:34px;height:34px;border-radius:50%!important;padding:0!important;background:#fff!important;color:#123!important;font-weight:700}#sHelp{position:absolute;left:8px;top:48px;right:8px;max-width:420px;background:rgba(15,25,30,.95);padding:12px;border-radius:8px;font-size:13px;line-height:1.5;display:none;z-index:3}";document.head.appendChild(cs);
+ var gu=document.createElement("div");gu.id="sGui";gu.style.display="none";
+ gu.innerHTML='<div id="sGb"><button type="button" id="sCr">Create problem</button><div class="r"><span style="flex-basis:100%">Randomise on create</span><label><input id="sRZ" type="checkbox" checked>Zero</label><label><input id="sRM" type="checkbox" checked>MSD</label><label><input id="sRC" type="checkbox" checked>CSD</label><label><input id="sRO" type="checkbox" checked>Obj</label></div><div class="r"><span>Pitch (1 MSD)</span><select id="sP"><option value="0.1">0.1 mm</option><option value="0.25">0.25 mm</option><option value="0.5">0.5 mm</option><option value="1">1 mm</option><option value="2">2 mm</option></select></div><div class="r"><span>MSD Count</span><input id="sM" type="range" min="10" max="50" step="10"><output id="xM"></output></div><div class="r"><span>CSD Count</span><input id="sC" type="range" min="25" max="100" step="25"><output id="xC"></output></div><div class="r"><span>Zero Error</span><input id="sZ" type="range" min="-49" max="49" step="1"><output id="xZ"></output></div><div class="r"><span>Display values</span><input id="sD" type="checkbox"></div><div class="r"><span>Background</span><input id="sB" type="color"></div><div class="r"><span>Scale</span><input id="sS" type="range" min=".2" max="3" step=".05"><output id="xS"></output></div></div><div id="sGh">Close Controls</div>';
+ host.appendChild(gu);["pointerdown","wheel","touchstart"].forEach(function(t){gu.addEventListener(t,function(e){e.stopPropagation()},{passive:true})});
+ var inf=document.createElement("button");inf.id="sInf";inf.type="button";inf.textContent="i";inf.style.display="none";host.appendChild(inf);
+ var hp=document.createElement("div");hp.id="sHelp";hp.innerHTML="<b>Screw Gauge Simulation</b><br>Customise the pitch, main-scale divisions, circular-scale divisions and zero error using the panel at the top right. Press <i>Create problem</i> to place an object between the anvil and the spindle, then turn the thimble until it grips the object and read its thickness.<br><br><b>Controls</b><br>Pinch or Page Up/Down to zoom. Mouse wheel, arrow keys or dragging the thimble turns it. Drag the background to pan.";host.appendChild(hp);
+ inf.onclick=function(e){e.stopPropagation();hp.style.display=hp.style.display=="block"?"none":"block"};
+ ["pointerdown","touchstart"].forEach(function(t){inf.addEventListener(t,function(e){e.stopPropagation()},{passive:true});hp.addEventListener(t,function(e){e.stopPropagation()},{passive:true})});
+ $("sB").value=bgc;
+ $("sP").onchange=function(){S.pitch=+this.value;update()};
+ $("sM").oninput=function(){S.M=+this.value;update()};
+ $("sC").oninput=function(){S.C=+this.value;update()};
+ $("sZ").oninput=function(){S.z=+this.value;update()};
+ $("sD").onchange=function(){S.dv=this.checked;update()};
+ $("sB").oninput=function(){bgc=this.value;host.style.background=bgc};
+ $("sS").oninput=function(){var r=cv.getBoundingClientRect();zoomAt(r.width/2,r.height/2,(+this.value)/S.sc)};
+ $("sCr").onclick=create;
+ if(host.clientWidth<600){$("sGb").style.display="none";$("sGh").textContent="Open Controls"}
+ $("sGh").onclick=function(){var b=$("sGb");b.style.display=b.style.display=="none"?"":"none";this.textContent=b.style.display=="none"?"Open Controls":"Close Controls"};
+ function ui(){ctl('<input id="iS" type="range" min="0" aria-label="Turn the thimble"><button type="button" id="iT1">−1 turn</button><button type="button" id="iT2">+1 turn</button><button type="button" id="iM">−1 div</button><button type="button" id="iP">+1 div</button><button type="button" id="iV">Reading close-up</button><button type="button" id="iCl">Remove object</button>',function(){
+  $("iS").oninput=function(){var v=+this.value;S.a=Math.floor(v/S.C);S.b=v-S.a*S.C;update()};
+  $("iT1").onclick=function(){tr(-S.C)};$("iT2").onclick=function(){tr(S.C)};$("iM").onclick=function(){tr(-1)};$("iP").onclick=function(){tr(1)};
+  $("iV").onclick=function(){var w=host.clientWidth,h=host.clientHeight,s2=clamp(w/330,.6,3);S.sc=s2;S.xo=w/(2*s2)-(OX+shift()+60);S.yo=h/(2*s2)-OY;update()};
+  $("iCl").onclick=function(){p=null;update()}})}
+ return{g:g,cv:cv,drag:[],ui:ui,upd:update,view:view,rs:rs,els:[gu,inf],hp:hp,zoomBy:function(f){var r=cv.getBoundingClientRect();zoomAt(r.width/2,r.height/2,f)},
+  show:function(b){cv.style.display=b?"block":"none";if(b)rs()},wheel:function(d,m){tr(d*(m>=10?S.C:1))},val:function(){return 0},set:function(){},mul:1}}
+/* ---------- scene, input, open/close ---------- */
+function init(){host=$("iHost");rd=new T.WebGLRenderer({antialias:true,alpha:true});rd.setPixelRatio(Math.min(devicePixelRatio||1,2));host.appendChild(rd.domElement);
+ sc=new T.Scene();cam=new T.PerspectiveCamera(35,1,.1,500);sc.add(new T.AmbientLight(0xffffff,.85));
+ var a=new T.DirectionalLight(0xffffff,.85);a.position.set(6,10,14);sc.add(a);var b=new T.DirectionalLight(0xbcd4ff,.35);b.position.set(-10,-5,8);sc.add(b);
+ INS={ruler:Rl(),vern:Vn(),screw:Sg()};for(var k in INS){INS[k].g.visible=false;sc.add(INS[k].g)}
+ bindInput();new ResizeObserver(size).observe(host);size();tab("ruler")}
+function size(){var w=host.clientWidth,h=host.clientHeight;if(!w||!h||!rd)return;rd.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();place();if(INS.vern&&INS.vern.rs)INS.vern.rs();if(INS.screw&&INS.screw.rs)INS.screw.rs()}
+function tab(k){act=k;real=false;host.style.background=is2(k)?bgc:"";var gu=$("iGui"),inf=$("iInf");if(gu)gu.style.display=k=="vern"?"block":"none";if(inf)inf.style.display=k=="vern"?"block":"none";if($("iHelp"))$("iHelp").style.display="none";INS.screw.els.forEach(function(e){e.style.display=k=="screw"?"block":"none"});INS.screw.hp.style.display="none";if($("gB"))$("gB").value=bgc;if($("sB"))$("sB").value=bgc;$("iRead").style.display="";for(var i in INS)INS[i].g.visible=i===k;rd.domElement.style.visibility=is2(k)?"hidden":"visible";INS.vern.show(k=="vern");INS.screw.show(k=="screw");[].forEach.call(document.querySelectorAll("#iTabs button"),function(b){b.classList.toggle("on",b.dataset.k===k)});INS[k].ui();INS[k].upd();INS[k].view()}
+function is2(k){return k=="vern"||k=="screw"}
+function bindInput(){var P={},dr=null,pd=0,pm=null,ray=new T.Raycaster(),m=new T.Vector2();
+ function ndc(e){var r=host.getBoundingClientRect();m.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(m,cam)}
+ function mid(){var k=Object.keys(P);return{x:(P[k[0]].x+P[k[1]].x)/2,y:(P[k[0]].y+P[k[1]].y)/2}}
+ function two(){var k=Object.keys(P);return Math.hypot(P[k[0]].x-P[k[1]].x,P[k[0]].y-P[k[1]].y)}
+ host.addEventListener("pointerdown",function(e){if(is2(act))return;host.setPointerCapture(e.pointerId);P[e.pointerId]={x:e.clientX,y:e.clientY};
+  if(Object.keys(P).length===1){var I=INS[act];ndc(e);var h=ray.intersectObjects(I.drag,false)[0],h2=I.obj?ray.intersectObjects(I.obj(),true)[0]:null,o=h2&&(!h||h2.distance<h.distance),q=o?h2:h;dr=q?{pl:new T.Plane().setFromNormalAndCoplanarPoint(cam.getWorldDirection(new T.Vector3()),q.point),p0:q.point.clone(),v0:o?I.pos():I.val(),o:o}:null}
+  else{dr=null;pd=two();pm=mid()}e.preventDefault()});
+ host.addEventListener("pointermove",function(e){var o=P[e.pointerId];if(!o)return;var dx=e.clientX-o.x,dy=e.clientY-o.y,n=Object.keys(P).length;o.x=e.clientX;o.y=e.clientY;
+  if(n===1){if(dr){ndc(e);var p=new T.Vector3();if(ray.ray.intersectPlane(dr.pl,p)){var I=INS[act];if(dr.o)I.mv(dr.v0[0]+p.x-dr.p0.x,dr.v0[1]+p.y-dr.p0.y);else I.set(dr.v0+(p.x-dr.p0.x)*I.mul)}}
+   else if(real){V.t[0]=clamp(V.t[0]-dx/PXCM,-9,9);place()}
+   else{V.az-=dx*.008;V.el=clamp(V.el+dy*.006,-1.2,1.35);place()}}
+  else if(n===2){var d=two(),q=mid();if(pd){V.d=clamp(V.d*pd/d,3,120);real=false}
+   if(pm){var u=2*V.d*Math.tan(cam.fov*Math.PI/360)/host.clientHeight,mx=q.x-pm.x,my=q.y-pm.y;V.t[0]-=mx*u*Math.cos(V.az);V.t[2]+=mx*u*Math.sin(V.az);V.t[1]+=my*u}
+   place();pd=d;pm=q}});
+ function up(e){delete P[e.pointerId];pd=0;pm=null;if(dr&&dr.o)INS[act].drop();dr=null}
+ host.addEventListener("pointerup",up);host.addEventListener("pointercancel",up);
+ host.addEventListener("wheel",function(e){if(is2(act))return;e.preventDefault();var I=INS[act];if(I.wheel){I.wheel(e.deltaY<0?1:-1,e.shiftKey?50:5);return}V.d=clamp(V.d*Math.exp(e.deltaY*.001),3,120);real=false;place()},{passive:false})}
+function ld(i,ok,bad){var s=document.createElement("script");s.src=CDN[i];s.onload=ok;s.onerror=function(){i+1<CDN.length?ld(i+1,ok,bad):bad()};document.head.appendChild(s)}
+function run(){size();cancelAnimationFrame(raf);(function l(){raf=requestAnimationFrame(l);rd.render(sc,cam)})()}
+function openIns(){morePop.style.display="none";ov.classList.add("on");
+ if(ready){run();return}if(booting)return;booting=true;var L=$("iLoad");L.style.display="block";L.textContent="Loading 3D…";
+ var go=function(){try{T=window.THREE;init();L.style.display="none";ready=true;run()}catch(e){L.innerHTML="3D is not supported on this device."}booting=false};
+ window.THREE&&window.THREE.WebGLRenderer?go():ld(0,go,function(){booting=false;L.innerHTML="Could not load the 3D library.<br>Check your internet connection and try again."})}
+function closeIns(){ov.classList.remove("on");cancelAnimationFrame(raf)}
+$("iX").onclick=closeIns;$("iHome").onclick=function(){if(ready)INS[act].view()};
+$("iTabs").onclick=function(e){var b=e.target.closest("button");if(b&&ready)tab(b.dataset.k)};
+document.addEventListener("keydown",function(e){if(!ov.classList.contains("on"))return;
+ if(e.key==="Escape"){e.stopPropagation();e.preventDefault();closeIns()}
+ else if(ready&&(e.key==="PageUp"||e.key==="PageDown")){if(is2(act))INS[act].zoomBy(e.key==="PageUp"?1.06:.94);else{V.d=clamp(V.d*(e.key==="PageUp"?.9:1.1),3,120);real=false;place()}e.preventDefault()}
+ else if(ready&&INS[act].wheel&&/^Arrow(Left|Right|Up|Down)$/.test(e.key)&&!/INPUT|SELECT/.test(document.activeElement.tagName)){INS[act].wheel(/Right|Up/.test(e.key)?1:-1,e.shiftKey?10:1);e.preventDefault()}},true);
+/* ---------- insert a snapshot (with the reading) into the current page ---------- */
+$("iIns").onclick=function(){
+ if(!ready||!cur||!els.length){toast("Open a note first (and wait for the 3D view to load)");return}
+ try{if(!is2(act))rd.render(sc,cam);var src=is2(act)?INS[act].cv:rd.domElement,sw=src.width,sh=src.height,s=Math.min(1,1400/sw),w=Math.round(sw*s),h=Math.round(sh*s),n=txt.length,ih=n?n*36+24:0,c=document.createElement("canvas");c.width=w;c.height=h+ih;var x=c.getContext("2d");
+  x.fillStyle=is2(act)?bgc:"#0e131b";x.fillRect(0,0,c.width,c.height);x.drawImage(src,0,0,w,h);
+  if(n){x.fillStyle="#12141a";x.fillRect(0,h,w,ih);x.font="26px Inter,'Noto Sans Bengali',sans-serif";x.textBaseline="top";txt.forEach(function(l,i){x.fillStyle=i?"#e8eaee":"#d4ff3a";x.fillText(l,20,h+14+i*36)})}
+  var data=c.toDataURL("image/png"),pg=cur.pages[Math.min(ap,cur.pages.length-1)],i=cur.pages.indexOf(pg),iw=W-60,ih2=iw*c.height/c.width;
+  if(ih2>pg.h-40){ih2=pg.h-40;iw=ih2*c.width/c.height}
+  snap(i);pg.objs.push({t:"i",id:uid(),src:data,x:(W-iw)/2,y:Math.max(20,(pg.h-ih2)/2),w:iw,h:ih2});
+  closeIns();setTool("select");sel={page:i,ids:[pg.objs.length-1]};draw(i);upd();save();els[i].wrap.scrollIntoView({block:"center"});toast("Instrument added to the page — resize or write over it")}
+ catch(e){toast("Could not capture the 3D view")}};
+/* ---------- menu button ---------- */
+var mb=document.createElement("button");mb.type="button";mb.id="insBtnMenu";
+mb.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="8" width="20" height="8" rx="1.5"/><path d="M6 8v3M10 8v4M14 8v3M18 8v4"/></svg><span>Instruments (3D)</span>';
+mb.onclick=openIns;var mp=$("shotBtn")||$("mapBtnMenu");mp?mp.after(mb):morePop.insertBefore(mb,morePop.firstChild);
+window.__ins={open:openIns};
+})();
+
+
+
 /* ---------- calculator (Casio-style natural display) ---------- */
 (function(){
 var F="\u0001",R="\u0002",PW="\u0003",NR="\u0004",AB="\u0005",SEP="\u0006",END="\u0007",LG="\u000e",DD="\u000f",DA="\u0010",MF="\u0011",DI="\u0012",DL="\u0013",DR="\u0014",DK="\u0015",DS="\u0016",SG="\u0019",OP=[F,R,PW,NR,AB,LG,DD,DA,MF,DI,DL,DR,DK,DS,SG];
