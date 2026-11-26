@@ -1086,7 +1086,7 @@ $("imgFile").onchange=function(){var f=this.files[0];this.value="";if(!f)return;
 $("pdfIn").onclick=function(){$("pdfFile").click()};
 $("pdfFile").onchange=async function(){var f=this.files[0];this.value="";if(!f)return;
   if(!window.pdfjsLib){toast("PDF library not loaded — check your internet connection");return}
-  var TGT=Math.min(4096,Math.max(2400,Math.round(Math.max(screen.width,screen.height)*(window.devicePixelRatio||1))));
+  var TGT=4096; /* always import at full quality, whatever device you import on */
   try{toast("Reading PDF…");var pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise,n=mkNote(f.name.replace(/\.pdf$/i,""));n.pages=[];
     for(var p=1;p<=pdf.numPages;p++){toast("Importing page "+p+" of "+pdf.numPages);var page=await pdf.getPage(p),v1=page.getViewport({scale:1}),vp=page.getViewport({scale:Math.min(TGT,Math.sqrt(24e6*v1.width/v1.height))/v1.width}),c=document.createElement("canvas");
       c.width=Math.round(vp.width);c.height=Math.round(vp.height);await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise;
@@ -1182,7 +1182,7 @@ function fitOne(e,i,d){var pg=cur.pages[i],wpx=0;
   if(fsOn){var a=W/pg.h,v=d[0]/d[1];wpx=(pg.bg&&Math.abs(a/v-1)<.08)?Math.max(d[0],d[1]*a):Math.max(100,Math.min(d[0],d[1]*a))} /* PDF/image page close to the screen shape: fill edge to edge, no bars */
   e.wrap.style.width=fsOn?wpx+"px":"";e.wrap.style.marginLeft=(fsOn&&wpx>d[0]+1)?(-(wpx-d[0])/2)+"px":"";
   if(e.off)return;
-  var cssW=e.cv.getBoundingClientRect().width||W;GK=Math.max(1,Math.min(5,cssW*(window.devicePixelRatio||1)/W));var cap=Math.min(5,Math.sqrt(2e7/(W*pg.h)),8192/W,8192/pg.h),want=Math.max(1,Math.min(cap,cssW*(window.devicePixelRatio||1)/W));want=Math.round(want*10)/10;
+  var cssW=e.cv.getBoundingClientRect().width||W;var vs=(window.visualViewport&&window.visualViewport.scale)||1,PX=(window.devicePixelRatio||1)*Math.max(1,vs);GK=Math.max(1,Math.min(5,cssW*PX/W));var cap=Math.min(5,Math.sqrt(2e7/(W*pg.h)),8192/W,8192/pg.h),want=Math.max(1,Math.min(cap,cssW*PX/W));want=Math.round(want*10)/10;
   if(Math.abs(want-e.sc)>.05){e.sc=want;e.cv.width=Math.round(W*want);e.cv.height=Math.round(pg.h*want);e.ctx.setTransform(want,0,0,want,0,0);draw(i)}}
 function fsAlign(i){if(!fsOn||!els.length)return;i=Math.max(0,Math.min(els.length-1,i|0));var sc=$("scroll"),pg=els[i].wrap.closest?els[i].wrap.closest(".page"):null;if(pg)sc.scrollTop=pg.offsetTop-sc.offsetTop+(pg.offsetHeight-sc.clientHeight)/2}
 function fitPages(){if(!cur)return;var d=fitDims();els.forEach(function(e,i){fitOne(e,i,d)});
@@ -1194,6 +1194,7 @@ function setFS(on){fsOn=on;document.body.classList.toggle("fs",on);var el=docume
 $("fsBtn").onclick=function(){setFS(!fsOn)};
 function onFsChange(){if(!document.fullscreenElement&&!document.webkitFullscreenElement&&fsOn&&fsNative)setFS(false);else{var c1=fsOn?curPage():0;setTimeout(function(){fitPages();if(fsOn)fsAlign(c1)},60);if(fsOn)setTimeout(function(){refitScreen();fsAlign(c1)},320)}}
 document.addEventListener("fullscreenchange",onFsChange);document.addEventListener("webkitfullscreenchange",onFsChange);
+var vvT=0;if(window.visualViewport)window.visualViewport.addEventListener("resize",function(){clearTimeout(vvT);vvT=setTimeout(function(){try{fitPages()}catch(_){}},250)});
 var rzT,rzC=0;window.addEventListener("resize",function(){if(fsOn&&!rzT)rzC=curPage();clearTimeout(rzT);rzT=setTimeout(function(){rzT=0;fitPages();if(fsOn){refitScreen();fsAlign(rzC)}},400)});
 function curPage(){var r=$("scroll").getBoundingClientRect(),ref=r.top+(r.bottom-r.top)*(fsOn?.5:.35),best=0,bd=1e9;
   els.forEach(function(e,i){var b=e.wrap.getBoundingClientRect(),dd=ref<b.top?b.top-ref:ref>b.bottom?ref-b.bottom:0;if(dd<bd){bd=dd;best=i}});return best}
@@ -1406,7 +1407,8 @@ var pn=document.createElement("div");pn.id="pnav";document.body.appendChild(pn);
 ["prevP","pgNo","nextP","addPage"].forEach(function(id){pn.appendChild($(id))});
 var zoom=1,zf=document.createElement("button");
 function zbtn(k,l,f){var b=document.createElement("button");setIcon(b,k,l);b.classList.add("zc");b.onclick=f;pn.appendChild(b)}
-function setZoom(z){zoom=Math.max(.5,Math.min(3,Math.round(z*100)/100));$("pages").style.setProperty("--z",zoom);zf.textContent=zoom===1?"Fit":Math.round(zoom*100)+"%";setTimeout(placeCtx,30)}
+function setZoom(z){zoom=Math.max(.5,Math.min(3,Math.round(z*100)/100));$("pages").style.setProperty("--z",zoom);zf.textContent=zoom===1?"Fit":Math.round(zoom*100)+"%";try{fitPages()}catch(_){}clearTimeout(zfT);zfT=setTimeout(function(){try{fitPages()}catch(_){}},120);setTimeout(placeCtx,30)}
+var zfT=0;
 zbtn("minus","Zoom out",function(){setZoom(zoom-.25)});zf.textContent="Fit";zf.title="Reset zoom";zf.classList.add("zc");zf.onclick=function(){setZoom(1)};pn.appendChild(zf);zbtn("plus","Zoom in",function(){setZoom(zoom+.25)});
 var tmBtn=document.createElement("button");tmBtn.id="tmBtn";tmBtn.type="button";tmBtn.title="Timer";tmBtn.setAttribute("aria-label","Timer");
 tmBtn.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9 2h6"/></svg>';pn.appendChild(tmBtn);
