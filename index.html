@@ -895,7 +895,8 @@ function cl(a){return a.map(function(o){var n={};for(var k in o)n[k]=o[k];return
 function snap(i){hist.push({i:i,objs:cl(cur.pages[i].objs)});if(hist.length>100)hist.shift();redoS=[];upd()}
 function swap(from,to){var h=from.pop();if(!h||!cur.pages[h.i])return;to.push({i:h.i,objs:cl(cur.pages[h.i].objs)});cur.pages[h.i].objs=h.objs;sel=null;hlPurge();hlStart();draw(h.i);save();upd()}
 function upd(){$("undo").disabled=!hist.length;$("redo").disabled=!redoS.length;$("delSel").disabled=!sel;
-  ["cpBtn","cutBtn","rotBtn"].forEach(function(id){var e=$(id);if(e)e.disabled=!sel});var pb=$("pasteBtn");if(pb)pb.disabled=!(clip&&clip.objs.length)}
+  ["cpBtn","cutBtn","rotBtn"].forEach(function(id){var e=$(id);if(e)e.disabled=!sel});
+  if(grpB&&ungB){var gp=sel&&cur&&cur.pages[sel.page],go=gp?sel.ids.map(function(ix){return gp.objs[ix]}).filter(Boolean):[],g0=go.length&&go[0].gid,same=go.length>1&&go.every(function(o){return o.gid&&o.gid===g0});grpB.style.display=(go.length>=2&&!same)?"":"none";ungB.style.display=go.some(function(o){return o.gid})?"":"none"}var pb=$("pasteBtn");if(pb)pb.disabled=!(clip&&clip.objs.length)}
 
 /* ---------- pages ---------- */
 function pt(cv,pg,e){var r=cv.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*pg.h/r.height]}
@@ -932,7 +933,7 @@ function buildPage(pg,i){
       var tolS=Math.max(10,16*W/(cv.getBoundingClientRect().width||W)),f=-1;for(var k=pg.objs.length-1;k>=0;k--)if(hit(pg.objs[k],p[0],p[1],tolS)){f=k;break}
       if(f<0){var ba=1e18;for(var k2=pg.objs.length-1;k2>=0;k2--){var po=pg.objs[k2];if(hitIn(po,p[0],p[1])){var bb2=bbox(po),ar2=(bb2[2]-bb2[0])*(bb2[3]-bb2[1]);if(ar2<ba){ba=ar2;f=k2}}}}
       if(f>=0){var inSel=ids0.indexOf(f)>-1,again=inSel&&ids0.length===1&&pg.objs[f].t==="x";
-        sel={page:i,ids:inSel?ids0:[f]};drawAll();upd();
+        sel={page:i,ids:inSel?ids0:expandGroups(pg,[f])};drawAll();upd();
         drag={m:"move",i:i,ids:sel.ids.slice(),os:sel.ids.map(function(ix){return dcl(pg.objs[ix])}),sx:p[0],sy:p[1],again:again}}
       else{sel=null;drawAll();upd();drag={m:"box",i:i,x0:p[0],y0:p[1],x1:p[0],y1:p[1],pts:[[p[0],p[1]]]}}
     }else if(tool==="tbox"){var fs=14+size*2,o3={t:"x",id:uid(),x:Math.max(0,Math.min(p[0],W-300)),y:p[1],w:300,h:0,text:"",color:color,fs:fs};
@@ -986,7 +987,7 @@ function buildPage(pg,i){
     if(d.m==="move"&&d.again&&!d.sn&&sel)startEdit(d.i,d.ids[0]);
     if(d.m==="box"){var pgb=cur.pages[d.i],rx0=d.bx0==null?d.x0:d.bx0,ry0=d.by0==null?d.y0:d.by0,rx1=d.bx1==null?d.x1:d.bx1,ry1=d.by1==null?d.y1:d.by1,got=[];
       var LPt=d.pts||[];if(LPt.length>2&&(rx1-rx0>6||ry1-ry0>6))pgb.objs.forEach(function(o,ix){var sm=objSamples(o),inn=0;for(var si=0;si<sm.length;si++)if(inPoly(LPt,sm[si][0],sm[si][1]))inn++;if(sm.length&&inn/sm.length>=.5)got.push(ix)});
-      sel=got.length?{page:d.i,ids:got}:null;draw(d.i);upd();return}
+      sel=got.length?{page:d.i,ids:expandGroups(pgb,got)}:null;draw(d.i);upd();return}
     save();upd()};
   cv.onpointerup=up;cv.onpointercancel=up;
   sh.appendChild(ta);sh.appendChild(cv);wrap.appendChild(lab);wrap.appendChild(sh);
@@ -1156,7 +1157,7 @@ $("ratio").onchange=function(){if(!cur)return;var v=this.value;cur.ratio=v;var h
   hist=[];redoS=[];sel=null;renderPages();save();toast(v==="wide"?"Slide 16:9 — PDF pages keep their own shape":v==="screen"?"Pages now match this screen — tap Full screen":"Tall page")};
 
 /* ---------- icons ---------- */
-var ICON={type:'<path d="M5 7V5h14v2"/><path d="M12 5v14"/><path d="M9 19h6"/>',select:'<path d="M5 3l14 8-6 2-2 6z"/>',
+var ICON={group:'<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/><path d="M11 7h2a3 3 0 0 1 3 3v3"/>',ungroup:'<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/><path d="M14 6l3-3M6 14l-3 3M15 3h2v2M3 15v2h2"/>',type:'<path d="M5 7V5h14v2"/><path d="M12 5v14"/><path d="M9 19h6"/>',select:'<path d="M5 3l14 8-6 2-2 6z"/>',
  pen:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',
  hl:'<path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/>',
  er:'<g transform="rotate(-45 12 11)"><rect x="2.5" y="6.5" width="19" height="9" rx="2.2"/><path d="M10 6.5v9"/></g><path d="M13 21h8"/>',
@@ -1248,14 +1249,14 @@ ICON.copy='<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2
 ICON.cut='<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.1 15.9M14.5 14.5L20 20M8.1 8.1L12 12"/>';
 ICON.paste='<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/>';
 ICON.rot='<path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/>';
-setIcon($("cpBtn"),"copy","Copy selected");setIcon($("cutBtn"),"cut","Cut selected");setIcon($("pasteBtn"),"paste","Paste on this slide");setIcon($("rotBtn"),"rot","Rotate 90°");
+setIcon($("cpBtn"),"copy","Copy — duplicates the selection right away");setIcon($("cutBtn"),"cut","Cut selected");setIcon($("pasteBtn"),"paste","Paste on this slide");setIcon($("rotBtn"),"rot","Rotate 90°");
 function targetPage(){return Math.max(0,Math.min(cur.pages.length-1,fsOn?curPage():ap))}
 function copySel(){if(!sel)return false;var pg=cur.pages[sel.page],os=sel.ids.filter(function(ix){return pg.objs[ix]}).map(function(ix){return dcl(pg.objs[ix])});if(!os.length)return false;
   clip={objs:os,page:sel.page,n:0};upd();toast("Copied — go to another slide and tap Paste");return true}
 function cutSel(){if(copySel()){delSel();toast("Cut — go to another slide and tap Paste")}}
-function pasteClip(){if(!clip||!clip.objs.length||!cur)return;var i=targetPage(),pg=cur.pages[i],dx=0,dy=0;
+function pasteClip(pi){if(!clip||!clip.objs.length||!cur)return;var i=(typeof pi==="number")?pi:targetPage(),pg=cur.pages[i],dx=0,dy=0;
   if(clip.page===i){clip.n++;dx=dy=24*clip.n}else clip.n=0;
-  var objs=clip.objs.map(function(o){var n=dcl(o);if(n.id)n.id=uid();return n});
+  var gm2={},objs=clip.objs.map(function(o){var n=dcl(o);if(n.id)n.id=uid();return regroup(gm2,n)});
   if(dx||dy)objs=objs.map(function(o){return xf(o,function(x,y){return[x+dx,y+dy]})});
   var u=unionB(objs),sx=0,sy=0;if(u[0]<0)sx=-u[0];else if(u[2]>W)sx=Math.min(0,W-u[2]);if(u[1]<0)sy=-u[1];else if(u[3]>pg.h)sy=Math.min(0,pg.h-u[3]);
   if(sx||sy)objs=objs.map(function(o){return xf(o,function(x,y){return[x+sx,y+sy]})});
@@ -1264,7 +1265,7 @@ function pasteClip(){if(!clip||!clip.objs.length||!cur)return;var i=targetPage()
 function selAll(){var i=targetPage(),pg=cur.pages[i];if(!pg.objs.length)return;sel={page:i,ids:pg.objs.map(function(_,k){return k})};draw(i);upd()}
 function rotateSel(d){if(!sel)return;var pg=cur.pages[sel.page],ids=sel.ids.filter(function(ix){return pg.objs[ix]});if(!ids.length)return;
   snap(sel.page);var F=frameOf(pg,ids);ids.forEach(function(ix){pg.objs[ix]=rotateAbout(pg.objs[ix],[F.cx,F.cy],d)});draw(sel.page);save();upd()}
-$("cpBtn").onclick=copySel;$("cutBtn").onclick=cutSel;$("pasteBtn").onclick=pasteClip;$("rotBtn").onclick=function(){rotateSel(Math.PI/2)};
+$("cpBtn").onclick=function(){var pi=sel?sel.page:targetPage();if(copySel())pasteClip(pi)};$("cutBtn").onclick=cutSel;$("pasteBtn").onclick=pasteClip;$("rotBtn").onclick=function(){rotateSel(Math.PI/2)};
 upd();
 
 /* ---------- long-press on a slide -> Paste (copied image / text / copied objects) ---------- */
@@ -1443,15 +1444,22 @@ shotBtn.onclick=async function(){
 var ctxEl=document.createElement("div");ctxEl.id="ctx";document.body.appendChild(ctxEl);
 var cr=document.createElement("div");cr.className="cr";
 ["#ffffff","#000000","#ff3b30","#ffcc00","#34c759","#0a84ff","#bf5af2"].forEach(function(c){var b=document.createElement("button");b.className="cd";b.style.background=c;b.setAttribute("aria-label","Color "+c);b.onclick=function(){if(sel)pickColor(c,null)};cr.appendChild(b)});
+function expandGroups(pg,ids){var gs={},any=false;ids.forEach(function(ix){var o=pg.objs[ix];if(o&&o.gid){gs[o.gid]=1;any=true}});if(!any)return ids;var out=[];pg.objs.forEach(function(o,ix){if(ids.indexOf(ix)>-1||(o.gid&&gs[o.gid]))out.push(ix)});return out}
+function groupSel(){if(!sel||!cur)return;var pg=cur.pages[sel.page],ids=sel.ids.filter(function(ix){return pg.objs[ix]});if(ids.length<2){toast("Select 2 or more things first (draw a loop around them), then tap Group");return}
+  snap(sel.page);var g="g"+uid();ids.forEach(function(ix){pg.objs[ix].gid=g});draw(sel.page);save();upd();toast("Grouped — they now move, resize and rotate together")}
+function ungroupSel(){if(!sel||!cur)return;var pg=cur.pages[sel.page],ids=expandGroups(pg,sel.ids.filter(function(ix){return pg.objs[ix]})),had=ids.some(function(ix){return pg.objs[ix].gid});if(!had){toast("These are not grouped");return}
+  snap(sel.page);ids.forEach(function(ix){delete pg.objs[ix].gid});sel={page:sel.page,ids:ids};draw(sel.page);save();upd();toast("Ungrouped")}
+var grpB=null,ungB=null;
+function regroup(map,o){if(o.gid){map[o.gid]=map[o.gid]||("g"+uid());o.gid=map[o.gid]}return o}
 function selObjs(){if(!sel||!cur)return[];var pg=cur.pages[sel.page];return sel.ids.map(function(ix){return pg.objs[ix]}).filter(Boolean)}
 function bump(d){var os=selObjs();if(!os.length)return;var o=os[0],v=o.t==="x"?(o.fs-14)/2:o.w;v=Math.max(.2,Math.min(40,Math.round((v+d)*10)/10));$("size").value=v;$("size").oninput();$("size").onchange()}
 function fillSel(){if(!sel)return;snap(sel.page);applySel(function(n){if(n.t==="h")n.fill=!n.fill})}
 function dupSel(){var os=selObjs();if(!os.length)return;var pg=cur.pages[sel.page],i=sel.page,st0=pg.objs.length;snap(i);
-  os.forEach(function(o){var n=xf(o,function(x,y){return[x+26,y+26]});if(n.id)n.id=uid();pg.objs.push(n)});sel={page:i,ids:os.map(function(_,k){return st0+k})};draw(i);save();upd()}
+  var gm={};os.forEach(function(o){var n=xf(o,function(x,y){return[x+26,y+26]});if(n.id)n.id=uid();regroup(gm,n);pg.objs.push(n)});sel={page:i,ids:os.map(function(_,k){return st0+k})};draw(i);save();upd()}
 function layer(d){if(!sel||sel.ids.length!==1)return toast("Select one item to change its layer");var pg=cur.pages[sel.page],a=sel.ids[0],b=a+d;if(b<0||b>=pg.objs.length)return;
   snap(sel.page);var t=pg.objs[a];pg.objs[a]=pg.objs[b];pg.objs[b]=t;sel={page:sel.page,ids:[b]};draw(sel.page);save();upd()}
 var ar=document.createElement("div");ar.className="cr";
-[["minus","Thinner",function(){bump(-1)}],["plus","Thicker",function(){bump(1)}],["fill","Fill",fillSel],["copy","Duplicate",dupSel],["up","Bring forward",function(){layer(1)}],["down","Send backward",function(){layer(-1)}],["del","Delete",delSel]].forEach(function(a){var b=document.createElement("button");setIcon(b,a[0],a[1]);b.onclick=a[2];ar.appendChild(b)});
+[["minus","Thinner",function(){bump(-1)}],["plus","Thicker",function(){bump(1)}],["fill","Fill",fillSel],["group","Group — bind selected items together",groupSel],["ungroup","Ungroup",ungroupSel],["copy","Duplicate",dupSel],["up","Bring forward",function(){layer(1)}],["down","Send backward",function(){layer(-1)}],["del","Delete",delSel]].forEach(function(a){var b=document.createElement("button");setIcon(b,a[0],a[1]);b.onclick=a[2];if(a[0]==="group")grpB=b;if(a[0]==="ungroup")ungB=b;ar.appendChild(b)});
 var oRow=document.createElement("div");oRow.className="cr";oRow.style.cssText="display:none;align-items:center;gap:8px;font-size:12px;color:#cfd3da;padding:2px 4px";
 var oRng=document.createElement("input");oRng.type="range";oRng.min="0";oRng.max="100";oRng.step="1";oRng.value="100";oRng.setAttribute("aria-label","Fill opacity");oRng.style.cssText="width:130px;min-height:26px;flex:none";
 var oVal=document.createElement("span");oVal.style.cssText="min-width:38px;text-align:right";oVal.textContent="100%";var oLab=document.createElement("span");oLab.textContent="Fill opacity";
