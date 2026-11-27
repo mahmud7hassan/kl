@@ -609,7 +609,7 @@ body.fs #scroll::-webkit-scrollbar{display:none}
 (function(){
 var W=900,CELL=W/28.125,$=function(i){return document.getElementById(i)};
 var editObj=null,editTA=null,editI=0,FONT='"Inter","Noto Sans Bengali",system-ui,sans-serif';
-var db=null,notes=[],cur=null,ap=0,tool="type",shapeKind="line",color="#14202b",hist=[],redoS=[],sel=null,penSeen=false,els=[],drag=null,clip=null,ROT=34,lastPen=0,handErase=true,HL_HOLD=5000,HL_FADE=1200,HL_A=.8,HL_ON=false,PALM_PX=48;
+var db=null,notes=[],cur=null,ap=0,tool="type",shapeKind="line",color="#14202b",hist=[],redoS=[],sel=null,penSeen=false,els=[],drag=null,clip=null,ROT=34,lastPen=0,handErase=true,HL_HOLD=5000,HL_FADE=1200,HL_A=.8,HL_ON=false,PALM_PX=48,QCAP=5,QMODE="auto",NEEDFIT=false,CALIB=false;
 var COLORS=["#000000","#14202b","#6b7280","#ffff00","#ffffff","#7f1d1d","#dc2626","#f97316","#f59e0b","#facc15","#a3e635","#16a34a","#065f46","#14b8a6","#06b6d4","#2563eb","#1e3a8a","#6366f1","#9333ea","#d946ef","#ec4899","#be185d","#92400e","#78350f"];
 var PAPERS={white:["#ffffff","#d5e0e8","#14202b"],yellow:["#fff9d6","#eadfa6","#2b2410"],gray:["#eceff1","#cfd6da","#14202b"],blue:["#e8f1fd","#c5d8f0","#10243d"],mint:["#e6f6ec","#c3e3cf","#102b1b"],pink:["#fdeaf0","#f0c9d6","#3a1624"],dark:["#23272e","#3a404a","#e8ecf1"],black:["#0b0b0c","#2a2c30","#f0f0f0"],board:["#1f3a2e","#35584a","#f1f5ef"],sea:["#dff4f7","#b2dce5","#0b3446"],sand:["#f6ead3","#e3d2ae","#3a2a12"],deepsea:["#0a2a3a","#1d4a60","#e3f6f9"],cinema:["#15171c","#2c303a","#f3ece0"]};
 if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -621,7 +621,12 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 function openDB(){return new Promise(function(res,rej){var r=indexedDB.open("mynotes",1);r.onupgradeneeded=function(){r.result.createObjectStore("notes",{keyPath:"id"})};r.onsuccess=function(){res(r.result)};r.onerror=function(){rej(r.error)}})}
 function dbAll(){return new Promise(function(res){var q=db.transaction("notes").objectStore("notes").getAll();q.onsuccess=function(){res(q.result)};q.onerror=function(){res([])}})}
 function dbPut(n){if(db)try{db.transaction("notes","readwrite").objectStore("notes").put(n)}catch(e){toast("Could not save — make a backup")}}
-var st;function save(n){n=n||cur;if(!n)return;n.updated=Date.now();clearTimeout(st);st=setTimeout(function(){dbPut(n)},300);renderList()}
+var st,LASTACT=0,SAVEFIRST=0,SAVEN=null;
+["pointerdown","pointermove","pointerup"].forEach(function(t){document.addEventListener(t,function(e){if(t!=="pointermove"||e.buttons>0||e.pointerType==="touch")LASTACT=Date.now()},true)});
+function flushSave(){if(SAVEN){clearTimeout(st);var n=SAVEN;SAVEN=null;SAVEFIRST=0;dbPut(n)}}
+document.addEventListener("visibilitychange",function(){if(document.hidden)flushSave()});window.addEventListener("pagehide",flushSave);
+function save(n){n=n||cur;if(!n)return;n.updated=Date.now();SAVEN=n;if(!SAVEFIRST)SAVEFIRST=Date.now();clearTimeout(st);
+  (function wait(){st=setTimeout(function(){if((drag||Date.now()-LASTACT<1500)&&Date.now()-SAVEFIRST<20000){wait();return}flushSave()},800)})();renderList()}
 
 /* ---------- geometry ---------- */
 function bbox(o){
@@ -920,16 +925,16 @@ function buildPage(pg,i){
           var pp=pt(cv,pg,e),wr1=handR(e,cv),pid1=drag.pid;drag={m:"er",i:i,last:pp,r:wr1,hand:true,pid:pid1,pt:"touch"};
           erase(pg,pp,i,wr1);erShow(e.clientX,e.clientY,wr1,cv,true);draw(i)}
         return}
-      if(penSeen){if(handErase&&ptl&&Date.now()-lastPen>500)wipe=true;else if(!ptl&&Date.now()-lastPen>500){}else return}
+      if(penSeen){if(handErase&&ptl&&!PEN_DOWN&&Date.now()-PEN_UP_T>150)wipe=true;else if(!ptl&&Date.now()-lastPen>500){}else return}
       else if(handErase&&ptl&&(TOUCH_ALL||palmBig(e)||touchN()>=2))wipe=true;
       if(!wipe)fingerNote(e)}
     e.preventDefault();cv.setPointerCapture(e.pointerId);var p=pt(cv,pg,e),size=+$("size").value;
     if(wipe){var wr=handR(e,cv);snap(i);drag={m:"er",i:i,last:p,r:wr,hand:true};erase(pg,p,i,wr);erShow(e.clientX,e.clientY,wr,cv,true);return}
     if(tool==="select"){
       var ids0=sel&&sel.page===i?sel.ids.filter(function(ix){return pg.objs[ix]}):[];
-      if(ids0.length){var F=frameOf(pg,ids0),Lp=toLocal(F,p),HT=Math.max(24,18*W/(cv.getBoundingClientRect().width||W)),osx=ids0.map(function(ix){return dcl(pg.objs[ix])});
-        if(Math.hypot(Lp[0],Lp[1]+F.hh+ROT)<HT){drag={m:"rot",i:i,ids:ids0,os:osx,c:[F.cx,F.cy],a0:Math.atan2(p[1]-F.cy,p[0]-F.cx)};return}
-        for(var hi=0;hi<8;hi++){var hd=HND[hi];if(Math.abs(Lp[0]-hd[0]*(F.hw+4))<HT&&Math.abs(Lp[1]-hd[1]*(F.hh+4))<HT){drag={m:"scale",i:i,ids:ids0,os:osx,q:toWorld(F,-hd[0]*F.hw,-hd[1]*F.hh),F:F,hd:hd};return}}}
+      if(ids0.length){var F=frameOf(pg,ids0),Lp=toLocal(F,p),kk0=W/(cv.getBoundingClientRect().width||W),HT=Math.max(8,Math.min(Math.max(14,13*kk0),.3*Math.min(2*F.hw,2*F.hh))),HR=Math.max(16,14*kk0),inFr=Math.abs(Lp[0])<F.hw&&Math.abs(Lp[1])<F.hh,osx=ids0.map(function(ix){return dcl(pg.objs[ix])});
+        if(Math.hypot(Lp[0],Lp[1]+F.hh+ROT)<HR){drag={m:"rot",i:i,ids:ids0,os:osx,c:[F.cx,F.cy],a0:Math.atan2(p[1]-F.cy,p[0]-F.cx)};return}
+        for(var hi=0;hi<8;hi++){var hd=HND[hi];if(Math.hypot(Lp[0]-hd[0]*(F.hw+4),Lp[1]-hd[1]*(F.hh+4))<(inFr?HT*.7:HT)){drag={m:"scale",i:i,ids:ids0,os:osx,q:toWorld(F,-hd[0]*F.hw,-hd[1]*F.hh),F:F,hd:hd};return}}}
       var tolS=Math.max(10,16*W/(cv.getBoundingClientRect().width||W)),f=-1;for(var k=pg.objs.length-1;k>=0;k--)if(hit(pg.objs[k],p[0],p[1],tolS)){f=k;break}
       if(f<0){var ba=1e18;for(var k2=pg.objs.length-1;k2>=0;k2--){var po=pg.objs[k2];if(hitIn(po,p[0],p[1])){var bb2=bbox(po),ar2=(bb2[2]-bb2[0])*(bb2[3]-bb2[1]);if(ar2<ba){ba=ar2;f=k2}}}}
       if(f>=0){var inSel=ids0.indexOf(f)>-1,again=inSel&&ids0.length===1&&pg.objs[f].t==="x";
@@ -942,7 +947,7 @@ function buildPage(pg,i){
       var o={t:"s",hl:tool==="hl",color:color,w:size,p:[[p[0],p[1],tool==="hl"?size:w]]};if(stampOn&&tool==="pen")o.stamp=stampKind;else if(brushOn&&tool==="pen"){o.brush=1;o.p[0][2]=o.w*.9}pg.objs.push(o);drag={m:"pen",i:i,o:o,lt:performance.now(),lw:o.brush?o.w*.9:null};draw(i)}
     else if(tool==="shape"){snap(i);var o2={t:"h",k:shapeKind,color:color,w:size,x1:p[0],y1:p[1],x2:p[0],y2:p[1]};if(shapeKind==="table"){o2.rows=tblR;o2.cols=tblC}pg.objs.push(o2);drag={m:"shape",i:i,o:o2}}
   };
-  cv.onpointerdown=function(e){var before=drag;pdown(e);if(drag&&drag!==before){drag.pid=e.pointerId;drag.pt=e.pointerType}};
+  cv.onpointerdown=function(e){var before=drag;pdown(e);if(drag&&drag!==before){drag.pid=e.pointerId;drag.pt=e.pointerType;if(drag.m==="pen")lagStart()}};
   cv.onpointermove=function(e){
     if(!drag||drag.i!==i)return;if(drag.pid!=null&&e.pointerId!==drag.pid)return;e.preventDefault();var p=pt(cv,pg,e);
     if(drag.m==="er"){var er=drag.r||+$("ersize").value;erShow(e.clientX,e.clientY,er,cv,!!drag.hand);var eevs=(e.getCoalescedEvents&&e.getCoalescedEvents())||[];if(!eevs.length)eevs=[e];
@@ -954,12 +959,12 @@ function buildPage(pg,i){
       if(drag.snapped)return;
       var minD=Math.min(1.2,1.2*W/(cv.getBoundingClientRect().width||W));
       if(Math.hypot(p[0]-l[0],p[1]-l[1])<minD)return;
-      if(o.brush){var nw=performance.now(),dt=Math.max(4,nw-(drag.lt||nw)),v=Math.hypot(p[0]-l[0],p[1]-l[1])/dt,pr=(e.pointerType==="pen"&&e.pressure)?(.55+e.pressure*.9):1,tw=o.w*2*(.3+1.45/(1+v*1.7))*pr;drag.lw=drag.lw==null?tw:drag.lw*.72+tw*.28;drag.lt=nw;o.p.push([p[0],p[1],drag.lw]);draw(i);return}
+      if(o.brush){var nw=performance.now(),dt=Math.max(4,nw-(drag.lt||nw)),v=Math.hypot(p[0]-l[0],p[1]-l[1])/dt,pr=(e.pointerType==="pen"&&e.pressure)?(.55+e.pressure*.9):1,tw=o.w*2*(.3+1.45/(1+v*1.7))*pr;drag.lw=drag.lw==null?tw:drag.lw*.72+tw*.28;drag.lt=nw;o.p.push([p[0],p[1],drag.lw]);erDraw(i);return}
       var evs=(e.getCoalescedEvents&&e.getCoalescedEvents())||[];if(!evs.length)evs=[e];
       evs.forEach(function(ce){var q=pt(cv,pg,ce),ll=o.p[o.p.length-1];if(Math.hypot(q[0]-ll[0],q[1]-ll[1])<minD)return;
         var w=o.hl?o.w:o.w*(ce.pointerType==="pen"&&ce.pressure?.4+ce.pressure*1.2:1);o.p.push([q[0],q[1],w]);
         if(!(o.hl||o.stamp))smoothTail(els[i].ctx,o)});
-      if(o.hl||o.stamp)draw(i);holdArm(drag,o,i,p)}
+      if(o.hl||o.stamp)erDraw(i);holdArm(drag,o,i,p)}
     else if(drag.m==="shape"){var sp2=shapeSnap(drag.o,p,e);drag.o.x2=sp2[0];drag.o.y2=sp2[1];draw(i)}
     else if(drag.m==="move"){if(!drag.sn){snap(i);drag.sn=1}
       var dx=p[0]-drag.sx,dy=p[1]-drag.sy;drag.ids.forEach(function(ix,j){pg.objs[ix]=xf(drag.os[j],function(x,y){return[x+dx,y+dy]})});draw(i)}
@@ -978,6 +983,7 @@ function buildPage(pg,i){
       drag.pts.forEach(function(q){drag.bx0=Math.min(drag.bx0==null?q[0]:drag.bx0,q[0]);drag.bx1=Math.max(drag.bx1==null?q[0]:drag.bx1,q[0]);drag.by0=Math.min(drag.by0==null?q[1]:drag.by0,q[1]);drag.by1=Math.max(drag.by1==null?q[1]:drag.by1,q[1])});drag.x1=p[0];drag.y1=p[1];erDraw(i)}
   };
   var up=function(e){if(!drag)return;if(e&&drag.pid!=null&&e.pointerId!==drag.pid)return;var d=drag;drag=null;d.ended=true;clearTimeout(d.ht);
+    if(NEEDFIT){NEEDFIT=false;setTimeout(function(){fitPages()},60)}
     if(d.m==="er"){ERDIRTY=false;draw(d.i)}
     if(d.m==="pen"&&!d.o.hl&&!d.o.brush&&!d.o.stamp)draw(d.i);
     if(d.m==="pen"&&d.o.hl){d.o.ts=Date.now();hlStart()}
@@ -1087,7 +1093,7 @@ $("imgFile").onchange=function(){var f=this.files[0];this.value="";if(!f)return;
 $("pdfIn").onclick=function(){$("pdfFile").click()};
 $("pdfFile").onchange=async function(){var f=this.files[0];this.value="";if(!f)return;
   if(!window.pdfjsLib){toast("PDF library not loaded — check your internet connection");return}
-  var TGT=4096; /* always import at full quality, whatever device you import on */
+  var TGT=3840; /* always import at full quality, whatever device you import on */
   try{toast("Reading PDF…");var pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise,n=mkNote(f.name.replace(/\.pdf$/i,""));n.pages=[];
     for(var p=1;p<=pdf.numPages;p++){toast("Importing page "+p+" of "+pdf.numPages);var page=await pdf.getPage(p),v1=page.getViewport({scale:1}),vp=page.getViewport({scale:Math.min(TGT,Math.sqrt(24e6*v1.width/v1.height))/v1.width}),c=document.createElement("canvas");
       c.width=Math.round(vp.width);c.height=Math.round(vp.height);await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise;
@@ -1183,7 +1189,7 @@ function fitOne(e,i,d){var pg=cur.pages[i],wpx=0;
   if(fsOn){var a=W/pg.h,v=d[0]/d[1];wpx=(pg.bg&&Math.abs(a/v-1)<.08)?Math.max(d[0],d[1]*a):Math.max(100,Math.min(d[0],d[1]*a))} /* PDF/image page close to the screen shape: fill edge to edge, no bars */
   e.wrap.style.width=fsOn?wpx+"px":"";e.wrap.style.marginLeft=(fsOn&&wpx>d[0]+1)?(-(wpx-d[0])/2)+"px":"";
   if(e.off)return;
-  var cssW=e.cv.getBoundingClientRect().width||W;var vs=(window.visualViewport&&window.visualViewport.scale)||1,PX=(window.devicePixelRatio||1)*Math.max(1,vs);GK=Math.max(1,Math.min(5,cssW*PX/W));var cap=Math.min(5,Math.sqrt(2e7/(W*pg.h)),8192/W,8192/pg.h),want=Math.max(1,Math.min(cap,cssW*PX/W));want=Math.round(want*10)/10;
+  var cssW=e.cv.getBoundingClientRect().width||W;var vs=(window.visualViewport&&window.visualViewport.scale)||1,PX=(window.devicePixelRatio||1)*Math.max(1,vs);GK=Math.max(1,Math.min(QCAP,cssW*PX/W));var cap=Math.min(QCAP,Math.sqrt(2e7/(W*pg.h)),8192/W,8192/pg.h),want=Math.max(1,Math.min(cap,cssW*PX/W));want=Math.round(want*10)/10;
   if(Math.abs(want-e.sc)>.05){e.sc=want;e.cv.width=Math.round(W*want);e.cv.height=Math.round(pg.h*want);e.ctx.setTransform(want,0,0,want,0,0);draw(i)}}
 function fsAlign(i){if(!fsOn||!els.length)return;i=Math.max(0,Math.min(els.length-1,i|0));var sc=$("scroll"),pg=els[i].wrap.closest?els[i].wrap.closest(".page"):null;if(pg)sc.scrollTop=pg.offsetTop-sc.offsetTop+(pg.offsetHeight-sc.clientHeight)/2}
 function fitPages(){if(!cur)return;var d=fitDims();els.forEach(function(e,i){fitOne(e,i,d)});
@@ -1537,20 +1543,79 @@ document.addEventListener("keydown",function(e){
   else if(e.key==="End"){e.preventDefault();goPage(els.length)}});
 
 /* ---------- palm helpers ---------- */
-var FSZ=[],TCH={},TOUCH_ALL=false;try{TOUCH_ALL=localStorage.getItem("touchAll")==="1"}catch(_){}
+var FSZ=[],TCH={},TOUCH_ALL=false,PEN_DOWN=false,PEN_UP_T=0;try{TOUCH_ALL=localStorage.getItem("touchAll")==="1"}catch(_){}
 function fingerNote(e){var d=Math.max(e.width||0,e.height||0);if(d>1&&d<PALM_PX){FSZ.push(d);if(FSZ.length>15)FSZ.shift()}}
-function palmLimit(){if(FSZ.length<3)return PALM_PX;var a=FSZ.slice().sort(function(x,y){return x-y}),m=a[a.length>>1];return Math.min(PALM_PX,Math.max(18,Math.round(m*1.7)))}
+function palmLimit(){if(CALIB||FSZ.length<3)return PALM_PX;var a=FSZ.slice().sort(function(x,y){return x-y}),m=a[a.length>>1];return Math.min(PALM_PX,Math.max(18,Math.round(m*1.7)))}
 function palmBig(e){var d=Math.max(e.width||0,e.height||0);return d>1&&d>=palmLimit()}
 function touchN(){var n=0,t=Date.now();for(var k in TCH){if(t-TCH[k]>6000)delete TCH[k];else n++}return n}
-document.addEventListener("pointerdown",function(e){if(e.pointerType==="touch")TCH[e.pointerId]=Date.now()},true);
+document.addEventListener("pointerdown",function(e){if(e.pointerType==="touch")TCH[e.pointerId]=Date.now();if(e.pointerType==="pen")PEN_DOWN=true},true);
+["pointerup","pointercancel"].forEach(function(n){document.addEventListener(n,function(e){if(e.pointerType==="pen"){PEN_DOWN=false;PEN_UP_T=Date.now()}},true)});
 ["pointerup","pointercancel"].forEach(function(n){document.addEventListener(n,function(e){delete TCH[e.pointerId]},true)});
-try{var ppv=+localStorage.getItem("palmPx");if(ppv===30||ppv===48||ppv===70||ppv===100)PALM_PX=ppv}catch(_){}
+try{var ppv=+localStorage.getItem("palmPx");if(ppv>=8&&ppv<=400)PALM_PX=ppv}catch(_){}
 var pw=document.createElement("label");pw.style.cssText="display:flex;gap:8px;align-items:center;justify-content:space-between;font-size:13px";
 pw.innerHTML='<span>Palm size to erase<br><small id="tchSz" style="color:#9aa0ab">Last touch: –</small></span><select id="palmSel"><option value="30">Small (sensitive)</option><option value="48">Normal</option><option value="70">Large palm only</option><option value="100">Very large (big screens)</option><option value="0">Any touch erases (write with stylus)</option></select>';
 hw.after(pw);$("palmSel").value=TOUCH_ALL?"0":String(PALM_PX);
 $("palmSel").onchange=function(){var v=+this.value;TOUCH_ALL=v===0;try{localStorage.setItem("touchAll",TOUCH_ALL?"1":"0")}catch(_){}
   if(!TOUCH_ALL){PALM_PX=v;try{localStorage.setItem("palmPx",String(PALM_PX))}catch(_){}}
   toast(TOUCH_ALL?"Any finger touch erases (pen tool)":"Touches of "+PALM_PX+" px or more erase")};
+/* ================= Hand-erase setup (calibration) + Sharpness / speed ================= */
+try{CALIB=localStorage.getItem("palmCal")==="1"}catch(_){}
+function syncPalmSel(){var se=$("palmSel");if(!se)return;if(TOUCH_ALL){se.value="0";return}
+  if(!se.querySelector('option[value="'+PALM_PX+'"]')){var o=document.createElement("option");o.value=PALM_PX;o.textContent="Calibrated ("+PALM_PX+" px)";se.insertBefore(o,se.firstChild)}se.value=String(PALM_PX)}
+(function(){var _pc=$("palmSel").onchange;$("palmSel").onchange=function(){CALIB=false;try{localStorage.setItem("palmCal","0")}catch(_){}_pc.call(this)}})();
+syncPalmSel();
+function openCal(){
+  morePop.style.display="none";
+  var ov=document.createElement("div");
+  ov.style.cssText="position:fixed;inset:0;z-index:99999;background:rgba(14,16,22,.95);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding:24px;touch-action:none;user-select:none;font:700 clamp(20px,3.2vw,40px)/1.35 system-ui,sans-serif";
+  var h=document.createElement("div"),sub=document.createElement("div"),btns=document.createElement("div");
+  sub.style.cssText="font-weight:400;font-size:.62em;opacity:.85;max-width:1000px";btns.style.cssText="display:flex;gap:14px;flex-wrap:wrap;justify-content:center";
+  ov.appendChild(h);ov.appendChild(sub);ov.appendChild(btns);document.body.appendChild(ov);
+  var step=1,fing=[],palm=[],cancels=0,types={},act={},ended=false;
+  function mk(t,f,pri){var b=document.createElement("button");b.type="button";b.textContent=t;b.style.cssText="font:inherit;font-size:.7em;padding:14px 26px;border-radius:14px;border:0;cursor:pointer;background:"+(pri?"#d4ff3a":"#2c2f37")+";color:"+(pri?"#101114":"#fff");b.onclick=f;return b}
+  function close(){ended=true;ov.remove()}
+  function med(a){var b=a.slice().sort(function(x,y){return x-y});return b[b.length>>1]||0}
+  function ui(){btns.innerHTML="";
+    if(step===1){h.textContent="Step 1 of 2: touch with ONE finger ("+fing.length+"/3)";sub.textContent="Tap or scribble with your fingertip, like normal writing."}
+    else{h.textContent="Step 2 of 2: touch with your PALM or the EDGE of your hand ("+palm.length+"/3)";sub.textContent="Do it exactly the way you rub out writing."+(cancels?" (The screen cancelled "+cancels+" touch"+(cancels>1?"es":"")+".)":"");
+      if(cancels||palm.length)btns.appendChild(mk("Finish now",finish))}
+    btns.appendChild(mk("Cancel",close))}
+  function apply(thr){PALM_PX=thr;CALIB=true;TOUCH_ALL=false;handErase=true;FSZ=[];var he=$("handEr");if(he)he.checked=true;
+    try{localStorage.setItem("palmPx",String(thr));localStorage.setItem("palmCal","1");localStorage.setItem("touchAll","0");localStorage.setItem("handErase","1")}catch(_){}syncPalmSel()}
+  function finish(){ended=true;btns.innerHTML="";var allT=Object.keys(types).join(", ")||"none";
+    var fa=fing.map(Math.round).join(", ")||"–",pa=palm.map(Math.round).join(", ")||"–",rep="Finger: "+fa+" px   Palm/hand: "+pa+" px   (input: "+allT+")";
+    var fmax=Math.max.apply(null,fing.concat([0])),pmin=palm.length?Math.min.apply(null,palm):0,fm=med(fing),pm=med(palm);
+    if(palm.length&&pm>=fm*1.3&&pm-fm>=6){var thr=pmin>fmax?Math.round((fmax+pmin)/2):Math.round((fm+pm)/2);thr=Math.max(fm+2,Math.min(400,thr));apply(thr);
+      h.textContent="Done ✓ Hand erase is set up";sub.textContent="Finger writes. A touch of "+thr+" px or more (palm / hand edge) erases while a pen tool is selected.  "+rep;
+      btns.appendChild(mk("OK",close,true))}
+    else{h.textContent=cancels&&!palm.length?"Your screen cancelled the palm touch":"This screen can't tell palm from finger";
+      sub.textContent=(cancels&&!palm.length?"The screen's own palm-rejection removed it before the app could see it. ":"It reports almost the same size for both. ")+"Best option: write with the stylus only and let any touch erase.  "+rep;
+      btns.appendChild(mk("Any touch erases (write with stylus)",function(){TOUCH_ALL=true;CALIB=false;handErase=true;var he=$("handEr");if(he)he.checked=true;try{localStorage.setItem("touchAll","1");localStorage.setItem("handErase","1")}catch(_){}syncPalmSel();close();toast("Any touch now erases — write with the stylus")},true));
+      btns.appendChild(mk("Keep as is",close))}}
+  function fin(id,cancel){var a=act[id];if(!a)return;delete act[id];if(a.t!=="touch"){return}
+    if(cancel){cancels++;ui();return}
+    if(step===1){fing.push(a.d);if(fing.length>=3){step=2}}else{palm.push(a.d);if(palm.length>=3){finish();return}}ui()}
+  ov.addEventListener("pointerdown",function(e){if(ended||e.target.tagName==="BUTTON")return;e.preventDefault();types[e.pointerType]=1;act[e.pointerId]={t:e.pointerType,d:Math.max(e.width||0,e.height||0)}});
+  ov.addEventListener("pointermove",function(e){var a=act[e.pointerId];if(a)a.d=Math.max(a.d,e.width||0,e.height||0)});
+  ov.addEventListener("pointerup",function(e){if(!ended&&e.target.tagName!=="BUTTON")fin(e.pointerId,false)});
+  ov.addEventListener("pointercancel",function(e){if(!ended)fin(e.pointerId,true)});
+  ui()}
+(function(){var b=document.createElement("button");b.type="button";b.textContent="🖐 Hand erase setup";b.style.cssText="font-weight:700";b.onclick=function(e){e.stopPropagation();openCal()};morePop.appendChild(b)})();
+
+/* Sharpness vs speed */
+try{var qm=localStorage.getItem("qmode");if(qm)QMODE=qm;if(QMODE==="auto"){var qa=+localStorage.getItem("qcapAuto");QCAP=(qa>=1.5&&qa<=5)?qa:5}else QCAP=+QMODE||5}catch(_){}
+(function(){var w=document.createElement("label");w.style.cssText="display:flex;flex-direction:column;gap:4px;font-size:12px";
+  w.innerHTML='<span>Sharpness / speed</span><select id="qSel"><option value="auto">Auto (adjusts to this screen)</option><option value="5">Max sharpness</option><option value="3">Balanced</option><option value="2">Fast (smoothest writing)</option></select>';
+  morePop.appendChild(w);var q=w.querySelector("select");q.value=QMODE;
+  q.onchange=function(){QMODE=this.value;QCAP=QMODE==="auto"?5:+QMODE;try{localStorage.setItem("qmode",QMODE);localStorage.removeItem("qcapAuto")}catch(_){}fitPages();toast(QMODE==="auto"?"Sharpness: Auto":"Sharpness: "+this.options[this.selectedIndex].text)}})();
+var LAGRUN=false,LAGN=0,LAGS=0,LAGL=0;
+function lagStart(){if(LAGRUN||QMODE!=="auto")return;LAGRUN=true;LAGN=0;LAGS=0;LAGL=0;requestAnimationFrame(lagTick)}
+function lagTick(t){if(!drag||drag.m!=="pen"){LAGRUN=false;return}
+  if(LAGL){LAGS+=t-LAGL;LAGN++;if(LAGN>=45){var avg=LAGS/LAGN;LAGN=0;LAGS=0;
+    if(avg>42&&QCAP>1.6){QCAP=Math.max(1.5,Math.round(QCAP*.7*10)/10);NEEDFIT=true;try{localStorage.setItem("qcapAuto",String(QCAP))}catch(_){}toast("Adjusted sharpness for smoother writing")}}}
+  LAGL=t;requestAnimationFrame(lagTick)}
+fitPages();
+
 var CANC=0;
 document.addEventListener("pointerdown",function(e){if(e.target.tagName==="CANVAS"){var sz=Math.max(e.width||0,e.height||0),el=$("tchSz");if(el)el.textContent="Last: "+e.pointerType+" "+Math.round(e.width||0)+"×"+Math.round(e.height||0)+" px, fingers "+touchN()+", cancels "+CANC+" (erase ≥ "+palmLimit()+" px or 2+ fingers)"}},true);
 document.addEventListener("pointercancel",function(e){if(e.pointerType==="touch"){CANC++;var el=$("tchSz");if(el)el.textContent="Touch was CANCELLED by the device (palm rejection), cancels "+CANC}},true);
